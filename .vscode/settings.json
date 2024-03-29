@@ -1,0 +1,16 @@
+{
+	"go.toolsManagement.checkForUpdates": "local",
+	"go.useLanguageServer": true,
+	"go.gopath": "/go",
+	"protoc": {
+		"path": "/usr/bin/protoc",
+		"compile_on_save": false,
+		"options": [
+			"--proto_path=protos",
+			"--go_out=${workspaceRoot}/protos",
+			"--go_opt=paths=source_relative",
+			"--go-grpc_out=${workspaceRoot}/protos",
+			"--go-grpc_opt=paths=source_relative",
+		]
+	}
+}
