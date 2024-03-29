@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/iliyankg/colab-shield/client"
-	"github.com/iliyankg/colab-shield/gitutils"
+	"github.com/iliyankg/colab-shield/cli/client"
+	"github.com/iliyankg/colab-shield/cli/gitutils"
+	"github.com/iliyankg/colab-shield/cli/utils"
 	pb "github.com/iliyankg/colab-shield/protos"
-	"github.com/iliyankg/colab-shield/utils"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )

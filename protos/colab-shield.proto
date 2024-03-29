@@ -13,10 +13,19 @@ enum Status {
 
 service ColabShield {
     rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse) {}
+    rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
     rpc Lock(LockRequest) returns (LockResponse) {}
 }
 
 message HealthCheckResponse {
+    Status status = 1;
+}
+
+message InitProjectRequest {
+    string projectId = 1;
+}
+
+message InitProjectResponse {
     Status status = 1;
 }
 
