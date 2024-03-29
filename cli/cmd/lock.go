@@ -47,7 +47,7 @@ var lockCmd = &cobra.Command{
 
 		response, err := client.Lock(ctx, payload)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to lock files")
+			log.Fatal().Err(err).Msg("failed to lock files")
 		}
 
 		if response.Status != pb.Status_OK {
