@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/iliyankg/colab-shield/cmd"
+	"github.com/iliyankg/colab-shield/cli/cmd"
 	"github.com/rs/zerolog"
 )
 
