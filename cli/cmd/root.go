@@ -27,6 +27,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&gitBranch, "gitBranch", "b", "", "git branch")
 	rootCmd.MarkFlagRequired("gitBranch")
 
+	rootCmd.AddCommand(initProjectCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(lockCmd)
 	rootCmd.AddCommand(validateCmd)
