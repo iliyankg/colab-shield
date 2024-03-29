@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package colabshield;
+
+option go_package = "github.com/iliyankg/colab-shield/protos";
+
+enum Status {
+    OK = 0;
+    ERROR = 1;
+}
+
+service ColabShield {
+    rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse) {}
+    rpc Lock(LockRequest) returns (LockResponse) {}
+}
+
+message HealthCheckResponse {
+    Status status = 1;
+}
+
+message LockRequest {
+    string projectId = 1;
+    string userId = 2;
+    string branchName = 3; 
+    map<string, string> files = 4;
+}
+
+message LockResponse {
+    Status status = 1;
+}
