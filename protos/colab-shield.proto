@@ -14,7 +14,9 @@ enum Status {
 service ColabShield {
     rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse) {}
     rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
-    rpc Lock(LockRequest) returns (LockResponse) {}
+    rpc ListProjects(google.protobuf.Empty) returns (ListProjectsResponse) {}
+    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
+    rpc Lock(LockRequest) returns (LockResponse) {}    
 }
 
 message HealthCheckResponse {
@@ -27,6 +29,25 @@ message InitProjectRequest {
 
 message InitProjectResponse {
     Status status = 1;
+}
+
+message ListProjectsResponse {
+    repeated string projects = 1;
+}
+
+message ListFilesRequest {
+    string projectId = 1;
+}
+
+message FileInfo {
+    string fileId = 1;
+    string fileHash = 2;
+    string userId = 3;
+    string branchName = 4;    
+}
+
+message ListFilesResponse {
+    repeated FileInfo files = 1;
 }
 
 message LockRequest {
