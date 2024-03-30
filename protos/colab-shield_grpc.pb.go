@@ -24,7 +24,7 @@ const (
 	ColabShield_InitProject_FullMethodName  = "/colabshield.ColabShield/InitProject"
 	ColabShield_ListProjects_FullMethodName = "/colabshield.ColabShield/ListProjects"
 	ColabShield_ListFiles_FullMethodName    = "/colabshield.ColabShield/ListFiles"
-	ColabShield_Lock_FullMethodName         = "/colabshield.ColabShield/Lock"
+	ColabShield_Claim_FullMethodName        = "/colabshield.ColabShield/Claim"
 )
 
 // ColabShieldClient is the client API for ColabShield service.
@@ -35,7 +35,7 @@ type ColabShieldClient interface {
 	InitProject(ctx context.Context, in *InitProjectRequest, opts ...grpc.CallOption) (*InitProjectResponse, error)
 	ListProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListProjectsResponse, error)
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
-	Lock(ctx context.Context, in *LockRequest, opts ...grpc.CallOption) (*LockResponse, error)
+	Claim(ctx context.Context, in *ClaimFilesRequest, opts ...grpc.CallOption) (*ClaimFilesResponse, error)
 }
 
 type colabShieldClient struct {
@@ -82,9 +82,9 @@ func (c *colabShieldClient) ListFiles(ctx context.Context, in *ListFilesRequest,
 	return out, nil
 }
 
-func (c *colabShieldClient) Lock(ctx context.Context, in *LockRequest, opts ...grpc.CallOption) (*LockResponse, error) {
-	out := new(LockResponse)
-	err := c.cc.Invoke(ctx, ColabShield_Lock_FullMethodName, in, out, opts...)
+func (c *colabShieldClient) Claim(ctx context.Context, in *ClaimFilesRequest, opts ...grpc.CallOption) (*ClaimFilesResponse, error) {
+	out := new(ClaimFilesResponse)
+	err := c.cc.Invoke(ctx, ColabShield_Claim_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ type ColabShieldServer interface {
 	InitProject(context.Context, *InitProjectRequest) (*InitProjectResponse, error)
 	ListProjects(context.Context, *emptypb.Empty) (*ListProjectsResponse, error)
 	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
-	Lock(context.Context, *LockRequest) (*LockResponse, error)
+	Claim(context.Context, *ClaimFilesRequest) (*ClaimFilesResponse, error)
 	mustEmbedUnimplementedColabShieldServer()
 }
 
@@ -119,8 +119,8 @@ func (UnimplementedColabShieldServer) ListProjects(context.Context, *emptypb.Emp
 func (UnimplementedColabShieldServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
 }
-func (UnimplementedColabShieldServer) Lock(context.Context, *LockRequest) (*LockResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Lock not implemented")
+func (UnimplementedColabShieldServer) Claim(context.Context, *ClaimFilesRequest) (*ClaimFilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Claim not implemented")
 }
 func (UnimplementedColabShieldServer) mustEmbedUnimplementedColabShieldServer() {}
 
@@ -207,20 +207,20 @@ func _ColabShield_ListFiles_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ColabShield_Lock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LockRequest)
+func _ColabShield_Claim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClaimFilesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ColabShieldServer).Lock(ctx, in)
+		return srv.(ColabShieldServer).Claim(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ColabShield_Lock_FullMethodName,
+		FullMethod: ColabShield_Claim_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ColabShieldServer).Lock(ctx, req.(*LockRequest))
+		return srv.(ColabShieldServer).Claim(ctx, req.(*ClaimFilesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -249,8 +249,8 @@ var ColabShield_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ColabShield_ListFiles_Handler,
 		},
 		{
-			MethodName: "Lock",
-			Handler:    _ColabShield_Lock_Handler,
+			MethodName: "Claim",
+			Handler:    _ColabShield_Claim_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

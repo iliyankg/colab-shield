@@ -13,22 +13,22 @@ import (
 )
 
 var (
-	filesToLock []string
+	filesToClaim []string
 )
 
-var lockCmd = &cobra.Command{
-	Use:   "lock",
-	Short: "Lock file(s) for editing",
-	Long:  `Lock file(s) for editing`,
+var claimFilesCmd = &cobra.Command{
+	Use:   "claim",
+	Short: "Claim file(s) for editing",
+	Long:  `Claim file(s) for editing`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hashes, err := gitutils.GetGitBlobHashes(filesToLock)
+		hashes, err := gitutils.GetGitBlobHashes(filesToClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
-		log.Info().Msgf("Git hash for files %s: %s", filesToLock, hashes)
+		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
 
-		mappedFiles := utils.BuildFileToHashMap(filesToLock, hashes)
+		mappedFiles := utils.BuildFileToHashMap(filesToClaim, hashes)
 		if mappedFiles == nil {
 			log.Fatal().Msg("Failed to map files to hash")
 		}
@@ -38,14 +38,14 @@ var lockCmd = &cobra.Command{
 		conn, client := client.NewColabShieldClient(ctx, serverAddress)
 		defer conn.Close()
 
-		payload := &pb.LockRequest{
+		payload := &pb.ClaimFilesRequest{
 			ProjectId:  gitBranch,
 			UserId:     gitUser,
 			BranchName: gitBranch,
 			Files:      mappedFiles,
 		}
 
-		response, err := client.Lock(ctx, payload)
+		response, err := client.Claim(ctx, payload)
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to lock files")
 		}
@@ -57,6 +57,6 @@ var lockCmd = &cobra.Command{
 }
 
 func init() {
-	lockCmd.Flags().StringArrayVarP(&filesToLock, "file", "f", []string{}, "files to lock")
-	lockCmd.MarkFlagRequired("file")
+	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
+	claimFilesCmd.MarkFlagRequired("file")
 }
