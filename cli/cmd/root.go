@@ -29,7 +29,7 @@ func init() {
 
 	rootCmd.AddCommand(initProjectCmd)
 	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(lockCmd)
+	rootCmd.AddCommand(claimFilesCmd)
 	rootCmd.AddCommand(validateCmd)
 }
 

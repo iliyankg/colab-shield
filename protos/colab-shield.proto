@@ -11,18 +11,29 @@ enum Status {
     ERROR = 1;
 }
 
+enum ClaimMode {
+    EXCLUSIVE = 0;
+    SHARED = 1;
+}
+
 service ColabShield {
     rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse) {}
     rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
     rpc ListProjects(google.protobuf.Empty) returns (ListProjectsResponse) {}
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
-    rpc Lock(LockRequest) returns (LockResponse) {}    
+    rpc Claim(ClaimFilesRequest) returns (ClaimFilesResponse) {}    
 }
 
+// ----------------------------------------
+// Health Check
+// ----------------------------------------
 message HealthCheckResponse {
     Status status = 1;
 }
 
+// ----------------------------------------
+// Project Messages
+// ----------------------------------------
 message InitProjectRequest {
     string projectId = 1;
 }
@@ -35,6 +46,9 @@ message ListProjectsResponse {
     repeated string projects = 1;
 }
 
+// ----------------------------------------
+// File Messages
+// ----------------------------------------
 message ListFilesRequest {
     string projectId = 1;
 }
@@ -43,20 +57,28 @@ message FileInfo {
     string fileId = 1;
     string fileHash = 2;
     string userId = 3;
-    string branchName = 4;    
+    string branchName = 4;
+    ClaimMode claimMode = 5;
 }
 
 message ListFilesResponse {
     repeated FileInfo files = 1;
 }
 
-message LockRequest {
+message FileClaimRequest {
+    string fileId = 1;
+    string fileHash = 2;
+    ClaimMode claimMode = 3;
+}
+
+message ClaimFilesRequest {
     string projectId = 1;
     string userId = 2;
     string branchName = 3; 
-    map<string, string> files = 4;
+    repeated FileClaimRequest files = 4;
 }
 
-message LockResponse {
+message ClaimFilesResponse {
     Status status = 1;
+    repeated FileInfo rejectedFiles = 2;
 }
