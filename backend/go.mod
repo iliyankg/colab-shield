@@ -20,4 +20,5 @@ require (
 	google.golang.org/protobuf v1.32.0 // indirect
 )
 
+// TODO: This is temporary and should not see production.
 replace github.com/iliyankg/colab-shield/protos v0.0.0 => ../protos
