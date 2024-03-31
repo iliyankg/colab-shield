@@ -1,8 +1,9 @@
-# Start with a base image
-FROM golang:1.22-alpine
 
 ARG PORT=1337
 ARG REDIS_HOST=redis
+
+# Start with a base image
+FROM golang:1.22-alpine
 
 # Set the working directory inside the container
 WORKDIR /backend
