@@ -58,7 +58,7 @@ message FileInfo {
     string fileHash = 2;
     string userId = 3;
     string branchName = 4;
-    ClaimMode claimMode = 5;
+    bool claimed = 5;
 }
 
 message ListFilesResponse {
