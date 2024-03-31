@@ -1,4 +1,3 @@
-
 # Start with a base image
 FROM golang:1.22-alpine
 
@@ -7,22 +6,23 @@ ARG PORT=1337
 ARG REDIS_HOST="redis:6379"
 
 # Set the working directory inside the container
-WORKDIR /backend
-
-# Copy the Go module files
-COPY go.mod go.sum ./
+WORKDIR /colab-shield
 
 # Copy the source code into the container
-COPY . .
+COPY ./backend ./backend
+
+#TODO: Only for dev purposes and should be removed.
+COPY ./protos ./protos 
 
 # Download the Go module dependencies
-RUN go mod download
+RUN cd backend && go mod download
 
 # Build the Go application
-RUN go build .
+RUN cd backend && go build .
 
-ENV ENV_PORT=$PORT
-ENV ENV_REDIS_HOST=$REDIS_HOST
+ENV ENV_PORT $PORT
+ENV ENV_REDIS_HOST $REDIS_HOST
 
 # Deliberately using shell form of entry point to allow for environment variable substitution
-ENTRYPOINT ./backend --port $ENV_PORT --redis-address $ENV_REDIS_HOST
+ENTRYPOINT ./backend/backend --port $ENV_PORT --redis-address $ENV_REDIS_HOST
+
