@@ -21,6 +21,8 @@ func main() {
 	flag.Parse()
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
+	log.Info().Msg("Starting server...")
+
 	// Connect to Redis
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     *redisAddress,
@@ -34,12 +36,14 @@ func main() {
 	pb.RegisterColabShieldServer(grpcServer, server.NewColabShieldServer(redisClient))
 
 	// Listen on port
+	log.Info().Msgf("Listening on port: %d", *port)
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to listen")
 	}
 
 	// Serve gRPC server
+	log.Info().Msg("Serving gRPC")
 	err = grpcServer.Serve(lis)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to serve")
