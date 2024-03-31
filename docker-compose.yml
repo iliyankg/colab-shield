@@ -5,9 +5,10 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: ./backend/Dockerfile-local
     environment:
-      - ENV_REDIS_HOST=redis:6379
+      - ENV_REDIS_HOST="redis:6379"
     depends_on:
       - redis
     ports:
