@@ -20,8 +20,9 @@
 
 	"remoteUser": "vscode",
 	"features": {
-		"github-cli": "latest"
-	}
+		"github-cli": "latest",	
+		"docker-in-docker": "latest"
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -30,7 +31,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "go version",
+	"postCreateCommand": "cd tools && ./download_go_deps.sh"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
