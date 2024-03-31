@@ -50,6 +50,8 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 }
 
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
+	log.Info().Msgf("Claiming files for project %s, branch %s, user %s", request.ProjectId, request.BranchName, request.UserId)
+
 	pipelinedFn := func(pipe redis.Pipeliner) error {
 		for _, file := range request.Files {
 			key := newRedisKeyFile(request.ProjectId, file.FileId)
