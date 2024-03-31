@@ -27,10 +27,10 @@ var claimFilesCmd = &cobra.Command{
 		}
 
 		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
-
-		mappedFiles := utils.BuildFileToHashMap(filesToClaim, hashes)
-		if mappedFiles == nil {
-			log.Fatal().Msg("Failed to map files to hash")
+		fileClaimRequests := make([]*pb.FileClaimRequest, 0, len(filesToClaim))
+		err = utils.BuildFileClaimRequests(&fileClaimRequests, filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -42,7 +42,7 @@ var claimFilesCmd = &cobra.Command{
 			ProjectId:  gitBranch,
 			UserId:     gitUser,
 			BranchName: gitBranch,
-			Files:      mappedFiles,
+			Files:      fileClaimRequests,
 		}
 
 		response, err := client.Claim(ctx, payload)
