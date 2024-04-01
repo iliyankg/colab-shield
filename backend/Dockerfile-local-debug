@@ -4,9 +4,14 @@ FROM golang:1.22-alpine
 # Define the default values for the build arguments
 ARG PORT=1337
 ARG REDIS_HOST="redis:6379"
+ARG DELVE_PORT=2345
 
-# Set the working directory inside the container
-WORKDIR /colab-shield
+# Set the working directory inside the container to match
+# the workspace directory in the devcontainer
+WORKDIR /workspaces/colab-shield
+
+# Add delve for debugging
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 # Copy the source code into the container
 COPY ./backend ./backend
@@ -22,7 +27,11 @@ RUN cd backend && go build .
 
 ENV ENV_PORT $PORT
 ENV ENV_REDIS_HOST $REDIS_HOST
+ENV ENV_DELVE_PORT $DELVE_PORT
+
+EXPOSE $PORT
+EXPOSE 2345
 
 # Deliberately using shell form of entry point to allow for environment variable substitution
-ENTRYPOINT ./backend/backend --port $ENV_PORT --redis-address $ENV_REDIS_HOST
+ENTRYPOINT dlv --continue --accept-multiclient --listen=:$ENV_DELVE_PORT --headless=true --api-version=2 --log exec ./backend/backend -- --port $ENV_PORT --redis-address $ENV_REDIS_HOST
 
