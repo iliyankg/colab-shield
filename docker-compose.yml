@@ -1,7 +1,19 @@
 version: '3'
+
+networks:
+  internal:
+    driver: bridge
+
 services:
   redis:
     image: redis:alpine
+    environment:
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis
+    ports:
+      - 6379:6379
+    networks: 
+      - internal
 
   backend:
     build:
@@ -10,8 +22,11 @@ services:
       dockerfile: ./backend/Dockerfile-local-debug
     environment:
       - ENV_REDIS_HOST="redis:6379"
+      - ENV_REDIS_PASSWORD="redis"
     depends_on:
       - redis
     ports:
       - 1337:1337
       - 2345:2345
+    networks:
+      - internal
