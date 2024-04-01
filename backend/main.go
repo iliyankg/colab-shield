@@ -1,32 +1,38 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net"
 
-	"github.com/iliyankg/colab-shield/backend/server"
-	pb "github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+
+	"github.com/iliyankg/colab-shield/backend/server"
+	pb "github.com/iliyankg/colab-shield/protos"
 )
 
-var port = flag.Int("port", 8080, "port to listen on")
-var redisAddress = flag.String("redis-address", "localhost:6379", "address of the redis server")
-
 func main() {
-	flag.Parse()
+	viper.BindEnv("COLABSHIELD_PORT")
+	viper.BindEnv("REDIS_HOST")
+	viper.BindEnv("REDIS_PORT")
+	viper.BindEnv("REDIS_PASSWORD")
+
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	log.Info().Msg("Starting server...")
 
+	port := viper.GetInt("COLABSHIELD_PORT")
+	redisHost := viper.GetString("REDIS_HOST")
+	redisPort := viper.GetInt("REDIS_PORT")
+	redisPassword := viper.GetString("REDIS_PASSWORD")
+
 	// Connect to Redis
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     *redisAddress,
-		Password: "",
+		Addr:     fmt.Sprintf("%s:%d", redisHost, redisPort),
+		Password: redisPassword,
 		DB:       0,
 	})
 
@@ -36,11 +42,11 @@ func main() {
 	pb.RegisterColabShieldServer(grpcServer, server.NewColabShieldServer(redisClient))
 
 	// Listen on port
-	log.Info().Msgf("Listening on port: %d", *port)
-	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", *port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to listen")
 	}
+	log.Info().Msgf("Listening on port: %d", port)
 
 	// Serve gRPC server
 	log.Info().Msg("Serving gRPC")
