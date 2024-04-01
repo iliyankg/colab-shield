@@ -39,7 +39,7 @@ var claimFilesCmd = &cobra.Command{
 		defer conn.Close()
 
 		payload := &pb.ClaimFilesRequest{
-			ProjectId:  gitBranch,
+			ProjectId:  gitRepo,
 			UserId:     gitUser,
 			BranchName: gitBranch,
 			Files:      fileClaimRequests,
