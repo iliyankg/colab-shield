@@ -6,7 +6,8 @@ networks:
 
 services:
   redis:
-    image: redis:alpine
+    # Use the official image for Redis with ReJSON support.
+    image: redislabs/rejson:latest
     environment:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=redis
@@ -21,8 +22,10 @@ services:
       context: .
       dockerfile: ./backend/Dockerfile-local-debug
     environment:
-      - ENV_REDIS_HOST="redis:6379"
-      - ENV_REDIS_PASSWORD="redis"
+      - COLABSHIELD_PORT=1337
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis
     depends_on:
       - redis
     ports:

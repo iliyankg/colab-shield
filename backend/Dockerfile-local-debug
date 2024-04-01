@@ -6,6 +6,7 @@ ARG ARG_PORT=1337
 ARG ARG_REDIS_HOST="redis"
 ARG ARG_REDIS_PORT=6379
 ARG ARG_REDIS_PASSWORD="redis"
+ARG ARG_DELVE_PORT=2345
 
 # Set the working directory inside the container to match
 # the workspace directory in the devcontainer
@@ -30,10 +31,11 @@ ENV COLABSHIELD_PORT=$ARG_PORT
 ENV REDIS_HOST=$ARG_REDIS_HOST
 ENV REDIS_PORT=$ARG_REDIS_PORT
 ENV REDIS_PASSWORD=$ARG_REDIS_PASSWORD
+ENV DELVE_PORT=$ARG_DELVE_PORT
 
 EXPOSE $PORT
 EXPOSE 2345
 
 # Deliberately using shell form of entry point to allow for environment variable substitution
-ENTRYPOINT dlv --continue --accept-multiclient --listen=:$ENV_DELVE_PORT --headless=true --api-version=2 --log exec ./backend/backend
+ENTRYPOINT dlv --continue --accept-multiclient --listen=:$DELVE_PORT --headless=true --api-version=2 --log exec ./backend/backend
 

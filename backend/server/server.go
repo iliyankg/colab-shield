@@ -76,9 +76,14 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 				continue
 			}
 
+			// If the key does not exist, continue
+			if result == "" {
+				continue
+			}
+
 			var fileInfo models.FileInfo
 			if err := json.Unmarshal([]byte(result), &fileInfo); err != nil {
-				log.Error().Err(err).Msg("Failed to unmarshal JSON from Redis hash")
+				log.Error().Str("key", key).Err(err).Msgf("Failed to unmarshal JSON from Redis hash")
 				continue
 			}
 
