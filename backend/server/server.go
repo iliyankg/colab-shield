@@ -105,6 +105,9 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 			Status:        pb.Status_ERROR,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
+	} else if err != nil {
+		log.Error().Err(err).Msg("Failed to claim files")
+		return nil, err
 	}
 
 	return &pb.ClaimFilesResponse{

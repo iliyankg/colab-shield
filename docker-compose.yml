@@ -5,11 +5,13 @@ services:
 
   backend:
     build:
+      # Context is . because we need the protos folder for now.
       context: .
-      dockerfile: ./backend/Dockerfile-local
+      dockerfile: ./backend/Dockerfile-local-debug
     environment:
       - ENV_REDIS_HOST="redis:6379"
     depends_on:
       - redis
     ports:
       - 1337:1337
+      - 2345:2345
