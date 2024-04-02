@@ -52,49 +52,67 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
 	log.Info().Msgf("Claiming files for project %s, branch %s, user %s", request.ProjectId, request.BranchName, request.UserId)
 
+	rejectedFiles := make([]*models.FileInfo, 0)
+	keys := make([]string, 0, len(request.Files))
+	keysFromFileClaimRequests(&keys, request.ProjectId, request.Files)
+
+	// Pipelined function to be executed at the end of the transaction to save
+	// the claimed files in Redis
 	pipelinedFn := func(pipe redis.Pipeliner) error {
-		for _, file := range request.Files {
-			key := newRedisKeyFile(request.ProjectId, file.FileId)
+		mSetParams := make([]interface{}, 0, len(request.Files)*3)
+		for i, file := range request.Files {
 			fileInfo := models.NewFileInfoFromProto(file.FileId, file.FileHash, request.UserId, request.BranchName, true)
-			err := pipe.JSONSet(ctx, key, "$", fileInfo).Err()
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to write to Redis hash")
-				return err
-			}
+			mSetParams = append(mSetParams, keys[i], "$", fileInfo)
 		}
+
+		if err := pipe.JSONMSet(ctx, mSetParams...).Err(); err != nil {
+			log.Error().Err(err).Msg("Failed to write to Redis hash")
+			return err
+		}
+
 		return nil
 	}
 
-	keys := make([]string, 0, len(request.Files))
-	keysFromFileClaimRequests(&keys, request.ProjectId, request.Files)
-	rejectedFiles := make([]*models.FileInfo, 0)
+	// Watch function to ensure keys do not get modified by another client while this transaction
+	// is in progress
 	watchFn := func(tx *redis.Tx) error {
-		for _, key := range keys {
-			result, err := tx.JSONGet(ctx, key, "$").Result()
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to read keys from Redis hash")
-				continue
-			}
+		result, err := tx.JSONMGet(ctx, "$", keys...).Result()
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read keys from Redis hash")
+			return err
+		}
 
-			// If the key does not exist, continue
-			if result == "" {
+		// Try to parse and validate each result.
+		for i, res := range result {
+			if res == nil {
 				continue
 			}
 
 			var fileInfo models.FileInfo
-			if err := json.Unmarshal([]byte(result), &fileInfo); err != nil {
-				log.Error().Str("key", key).Err(err).Msgf("Failed to unmarshal JSON from Redis hash")
+			if err := json.Unmarshal([]byte(res.(string)), &fileInfo); err != nil {
+				// TODO: This may not be the best way to handle this error but should do for now.
+				log.Error().Str("key", keys[i]).Err(err).Msgf("Failed to unmarshal JSON from Redis hash")
 				continue
 			}
 
+			// Reject if already claimed.
+			// TODO: factor in claim modes and multi-user claims
 			if fileInfo.Claimed {
 				rejectedFiles = append(rejectedFiles, &fileInfo)
-				continue
 			}
 		}
 
-		_, err := tx.TxPipelined(ctx, pipelinedFn)
-		return err
+		if len(rejectedFiles) > 0 {
+			return ErrRejectedFiles
+		}
+
+		_, err = tx.TxPipelined(ctx, pipelinedFn)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to execute pipelined function")
+			return err
+		}
+
+		return nil
 	}
 
 	// Execute the watch function
@@ -102,9 +120,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 
 	if errors.Is(err, ErrRejectedFiles) {
 		protoRejectedFiles := make([]*pb.FileInfo, 0, len(rejectedFiles))
-		for _, file := range rejectedFiles {
-			protoRejectedFiles = append(protoRejectedFiles, file.ToProto())
-		}
+		models.FileInfosToProto(&protoRejectedFiles, rejectedFiles)
 
 		return &pb.ClaimFilesResponse{
 			Status:        pb.Status_ERROR,
