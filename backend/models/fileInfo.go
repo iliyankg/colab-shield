@@ -25,7 +25,7 @@ func NewFileInfoFromProto(fileId string, fileHash string, userId string, branchN
 	}
 }
 
-// Implemented encoding.BinaryMarshaler interface for FileInfo
+// Implements encoding.BinaryMarshaler interface for FileInfo
 // Needed for redis client to marshal FileInfo
 // Deliberately pass by value not by pointer!
 func (fi FileInfo) MarshalBinary() ([]byte, error) {

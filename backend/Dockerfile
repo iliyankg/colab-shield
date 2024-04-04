@@ -1,4 +1,3 @@
-
 # Start with a base image
 FROM golang:1.22-alpine
 
