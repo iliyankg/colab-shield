@@ -24,12 +24,12 @@ type FileInfo struct {
 }
 
 // NewFileInfo creates a new blank FileInfo with just a File ID
-func NewFileInfo(fileId string) *FileInfo {
+func NewFileInfo(fileId string, fileHash string, branchName string) *FileInfo {
 	return &FileInfo{
 		FileId:     fileId,
-		FileHash:   "",
+		FileHash:   fileHash,
 		UserIds:    []string{},
-		BranchName: "",
+		BranchName: branchName,
 		ClaimMode:  pb.ClaimMode_UNCLAIMED,
 	}
 }
@@ -40,7 +40,6 @@ func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode
 		return ErrInvalidClaimMode
 	}
 
-	// TODO: Handle when it is a brand new file and consider relevant invariants of the FileInfo type.
 	if fi.FileHash != fileHash {
 		return ErrFileOutOfDate
 	}
