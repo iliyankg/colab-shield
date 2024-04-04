@@ -68,25 +68,27 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 
 		// Try to parse and validate each result.
 		for i, res := range result {
+			reqFile := request.Files[i]
+
 			// If res is nil then the key does not exist in the hash this it is fair game and we should construct a new entry for it.
 			if res == nil {
-				newFileInfo := models.NewFileInfo(request.Files[i].FileId, request.Files[i].FileHash, request.BranchName)
+				newFileInfo := models.NewFileInfo(reqFile.FileId, reqFile.FileHash, request.BranchName)
 				files = append(files, newFileInfo)
+				continue
 			}
 
 			var fileInfo models.FileInfo
 			if err := json.Unmarshal([]byte(res.(string)), &fileInfo); err != nil {
-				// TODO: This may not be the best way to handle this error but should do for now.
+				// TODO: This needs to be fixed but should do for now.
 				log.Error().Str("key", keys[i]).Err(err).Msgf("Failed to unmarshal JSON from Redis hash")
 				continue
 			}
 
 			files = append(files, &fileInfo)
 
-			// Reject if already claimed.
-			// TODO: factor in claim modes and multi-user claims
-			if fileInfo.ClaimMode == pb.ClaimMode_EXCLUSIVE {
-				rejectedFiles = append(rejectedFiles, &fileInfo)
+			if err := files[i].Claim(request.UserId, reqFile.FileHash, reqFile.ClaimMode); err != nil {
+				log.Error().Err(err).Msg("Failed to claim file")
+				rejectedFiles = append(rejectedFiles, files[i])
 			}
 		}
 
@@ -127,6 +129,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 		return nil, err
 	}
 
+	// TODO: Consider returning the files that were claimed succesfully
 	return &pb.ClaimFilesResponse{
 		Status: pb.Status_OK,
 	}, nil
