@@ -7,12 +7,13 @@ networks:
 services:
   redis:
     # Use the official image for Redis with ReJSON support.
-    image: redislabs/rejson:latest
+    image: redis/redis-stack:latest
     environment:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=redis
     ports:
       - 6379:6379
+      - 8001:8001
     networks: 
       - internal
 
