@@ -12,8 +12,9 @@ enum Status {
 }
 
 enum ClaimMode {
-    EXCLUSIVE = 0;
-    SHARED = 1;
+    UNCLAIMED = 0;
+    EXCLUSIVE = 1;
+    SHARED = 2;
 }
 
 service ColabShield {
@@ -56,9 +57,9 @@ message ListFilesRequest {
 message FileInfo {
     string fileId = 1;
     string fileHash = 2;
-    string userId = 3;
+    repeated string userIds = 3;
     string branchName = 4;
-    bool claimed = 5;
+    ClaimMode claimMode = 5;
 }
 
 message ListFilesResponse {

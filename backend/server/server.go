@@ -52,6 +52,7 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
 	log.Info().Msgf("Claiming files for project %s, branch %s, user %s", request.ProjectId, request.BranchName, request.UserId)
 
+	files := make([]*models.FileInfo, 0, len(request.Files))
 	rejectedFiles := make([]*models.FileInfo, 0)
 	keys := make([]string, 0, len(request.Files))
 	keysFromFileClaimRequests(&keys, request.ProjectId, request.Files)
@@ -67,8 +68,10 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 
 		// Try to parse and validate each result.
 		for i, res := range result {
+			// If res is nil then the key does not exist in the hash this it is fair game and we should construct a new entry for it.
 			if res == nil {
-				continue
+				newFileInfo := models.NewFileInfo(request.Files[i].FileId)
+				files = append(files, newFileInfo)
 			}
 
 			var fileInfo models.FileInfo
@@ -78,9 +81,11 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 				continue
 			}
 
+			files = append(files, &fileInfo)
+
 			// Reject if already claimed.
 			// TODO: factor in claim modes and multi-user claims
-			if fileInfo.Claimed {
+			if fileInfo.ClaimMode == pb.ClaimMode_EXCLUSIVE {
 				rejectedFiles = append(rejectedFiles, &fileInfo)
 			}
 		}
@@ -91,7 +96,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 
 		mSetParams := make([]any, 0, len(request.Files)*3)
 		for i, file := range request.Files {
-			fileInfo := models.NewFileInfoFromProto(file.FileId, file.FileHash, request.UserId, request.BranchName, true)
+			fileInfo := models.NewFileInfo(file.FileId)
 			mSetParams = append(mSetParams, keys[i], "$", *fileInfo)
 		}
 

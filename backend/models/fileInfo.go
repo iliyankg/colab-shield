@@ -2,27 +2,114 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 
 	pb "github.com/iliyankg/colab-shield/protos"
 )
 
+var (
+	ErrFileAlreadyClaimed = errors.New("file already claimed")
+	ErrFileOutOfDate      = errors.New("file out of date")
+	ErrUserNotOwner       = errors.New("user not owner")
+	ErrInvalidClaimMode   = errors.New("invalid claim mode")
+)
+
+// FileInfo represents a file in the system
 type FileInfo struct {
-	FileId     string `json:"fileId"`
-	FileHash   string `json:"fileHash"`
-	UserId     string `json:"userId"`
-	BranchName string `json:"branchName"`
-	Claimed    bool   `json:"claimed"`
+	FileId     string       `json:"fileId"`
+	FileHash   string       `json:"fileHash"`
+	UserIds    []string     `json:"userIds"`
+	BranchName string       `json:"branchName"`
+	ClaimMode  pb.ClaimMode `json:"mode"`
 }
 
-// NewFileInfoFromProto creates a new FileInfo from a pb.FileInfo
-func NewFileInfoFromProto(fileId string, fileHash string, userId string, branchName string, claimed bool) *FileInfo {
+// NewFileInfo creates a new blank FileInfo with just a File ID
+func NewFileInfo(fileId string) *FileInfo {
 	return &FileInfo{
 		FileId:     fileId,
-		FileHash:   fileHash,
-		UserId:     userId,
-		BranchName: branchName,
-		Claimed:    claimed,
+		FileHash:   "",
+		UserIds:    []string{},
+		BranchName: "",
+		ClaimMode:  pb.ClaimMode_UNCLAIMED,
 	}
+}
+
+// Claim claims a file for a user
+func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode) error {
+	if claimMode == pb.ClaimMode_UNCLAIMED {
+		return ErrInvalidClaimMode
+	}
+
+	// TODO: Handle when it is a brand new file and consider relevant invariants of the FileInfo type.
+	if fi.FileHash != fileHash {
+		return ErrFileOutOfDate
+	}
+
+	if err := fi.addOwner(userId); err != nil {
+		return err
+	}
+
+	fi.ClaimMode = claimMode
+
+	return nil
+}
+
+// Update updates the file hash for a file only if the user is an owner
+func (fi *FileInfo) Update(userId string, fileHash string, branchName string) error {
+	if !fi.CheckOwner(userId) {
+		return ErrUserNotOwner
+	}
+
+	fi.FileHash = fileHash
+	fi.BranchName = branchName
+	return nil
+}
+
+// Release releases a file from a user if they are an owner
+func (fi *FileInfo) Release(userId string) error {
+	if err := fi.removeOwner(userId); err != nil {
+		return err
+	}
+
+	if len(fi.UserIds) == 0 {
+		fi.ClaimMode = pb.ClaimMode_UNCLAIMED
+	}
+
+	return nil
+}
+
+// CheckOwner checks if a user is an owner of a file
+func (fi *FileInfo) CheckOwner(userId string) bool {
+	for _, id := range fi.UserIds {
+		if id == userId {
+			return true
+		}
+	}
+	return false
+}
+
+// addOwner adds a userId to the FileInfo
+// Adding an owner can only happen through claiming.
+func (fi *FileInfo) addOwner(userId string) error {
+	if fi.ClaimMode == pb.ClaimMode_EXCLUSIVE || fi.CheckOwner(userId) {
+		return ErrFileAlreadyClaimed
+	}
+
+	fi.UserIds = append(fi.UserIds, userId)
+
+	return nil
+}
+
+// removeOwner removes a userId from the FileInfo
+func (fi *FileInfo) removeOwner(userId string) error {
+	for i, id := range fi.UserIds {
+		if id == userId {
+			fi.UserIds = append(fi.UserIds[:i], fi.UserIds[i+1:]...)
+			return nil
+		}
+	}
+
+	return ErrUserNotOwner
 }
 
 // Implements encoding.BinaryMarshaler interface for FileInfo
@@ -37,9 +124,9 @@ func (fi *FileInfo) ToProto() *pb.FileInfo {
 	return &pb.FileInfo{
 		FileId:     fi.FileId,
 		FileHash:   fi.FileHash,
-		UserId:     fi.UserId,
+		UserIds:    fi.UserIds,
 		BranchName: fi.BranchName,
-		Claimed:    fi.Claimed,
+		ClaimMode:  fi.ClaimMode,
 	}
 }
 
