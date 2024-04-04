@@ -56,23 +56,6 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 	keys := make([]string, 0, len(request.Files))
 	keysFromFileClaimRequests(&keys, request.ProjectId, request.Files)
 
-	// Pipelined function to be executed at the end of the transaction to save
-	// the claimed files in Redis
-	pipelinedFn := func(pipe redis.Pipeliner) error {
-		mSetParams := make([]interface{}, 0, len(request.Files)*3)
-		for i, file := range request.Files {
-			fileInfo := models.NewFileInfoFromProto(file.FileId, file.FileHash, request.UserId, request.BranchName, true)
-			mSetParams = append(mSetParams, keys[i], "$", fileInfo)
-		}
-
-		if err := pipe.JSONMSet(ctx, mSetParams...).Err(); err != nil {
-			log.Error().Err(err).Msg("Failed to write to Redis hash")
-			return err
-		}
-
-		return nil
-	}
-
 	// Watch function to ensure keys do not get modified by another client while this transaction
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
@@ -106,9 +89,17 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 			return ErrRejectedFiles
 		}
 
-		_, err = tx.TxPipelined(ctx, pipelinedFn)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to execute pipelined function")
+		mSetParams := make([]any, 0, len(request.Files)*3)
+		for i, file := range request.Files {
+			fileInfo := models.NewFileInfoFromProto(file.FileId, file.FileHash, request.UserId, request.BranchName, true)
+			mSetParams = append(mSetParams, keys[i], "$", *fileInfo)
+		}
+
+		log.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
+		// Not pipelined because it uses MULTI/EXEC internally already and redis does not support
+		// nested transactions.
+		if err := tx.JSONMSet(ctx, mSetParams...).Err(); err != nil {
+			log.Error().Err(err).Msg("Failed to write to Redis hash")
 			return err
 		}
 
