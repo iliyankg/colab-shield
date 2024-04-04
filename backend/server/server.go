@@ -70,7 +70,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 		for i, res := range result {
 			// If res is nil then the key does not exist in the hash this it is fair game and we should construct a new entry for it.
 			if res == nil {
-				newFileInfo := models.NewFileInfo(request.Files[i].FileId)
+				newFileInfo := models.NewFileInfo(request.Files[i].FileId, request.Files[i].FileHash, request.BranchName)
 				files = append(files, newFileInfo)
 			}
 
@@ -96,7 +96,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 
 		mSetParams := make([]any, 0, len(request.Files)*3)
 		for i, file := range request.Files {
-			fileInfo := models.NewFileInfo(file.FileId)
+			fileInfo := models.NewFileInfo(file.FileId, file.FileHash, request.BranchName)
 			mSetParams = append(mSetParams, keys[i], "$", *fileInfo)
 		}
 
