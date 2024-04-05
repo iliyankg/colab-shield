@@ -40,8 +40,17 @@ func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode
 		return ErrInvalidClaimMode
 	}
 
+	// Already claimed by someone else.
+	if fi.ClaimMode == pb.ClaimMode_EXCLUSIVE {
+		return ErrFileAlreadyClaimed
+	}
+
 	if fi.FileHash != fileHash {
 		return ErrFileOutOfDate
+	}
+
+	if fi.ClaimMode == pb.ClaimMode_SHARED && claimMode == pb.ClaimMode_EXCLUSIVE {
+		return ErrInvalidClaimMode
 	}
 
 	if err := fi.addOwner(userId); err != nil {
@@ -90,8 +99,8 @@ func (fi *FileInfo) CheckOwner(userId string) bool {
 // addOwner adds a userId to the FileInfo
 // Adding an owner can only happen through claiming.
 func (fi *FileInfo) addOwner(userId string) error {
-	if fi.ClaimMode == pb.ClaimMode_EXCLUSIVE || fi.CheckOwner(userId) {
-		return ErrFileAlreadyClaimed
+	if fi.CheckOwner(userId) {
+		return nil
 	}
 
 	fi.UserIds = append(fi.UserIds, userId)
