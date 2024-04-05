@@ -66,27 +66,34 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 			return err
 		}
 
-		// Try to parse and validate each result.
+		// parse all files from the Redis and create new where appropriate
 		for i, res := range result {
-			reqFile := request.Files[i]
-
-			// If res is nil then the key does not exist in the hash this it is fair game and we should construct a new entry for it.
+			// key does not exist in the DB so assume brand new
 			if res == nil {
-				newFileInfo := models.NewFileInfo(reqFile.FileId, reqFile.FileHash, request.BranchName)
+				newFileInfo := models.NewFileInfo(request.Files[i].FileId, request.Files[i].FileHash, request.BranchName)
 				files = append(files, newFileInfo)
 				continue
 			}
 
+			// unmarshal the JSON from the Redis hash
 			var fileInfo models.FileInfo
 			if err := json.Unmarshal([]byte(res.(string)), &fileInfo); err != nil {
-				// TODO: This needs to be fixed but should do for now.
+				// TODO: This should be handled better.
 				log.Error().Str("key", keys[i]).Err(err).Msgf("Failed to unmarshal JSON from Redis hash")
 				continue
 			}
 
 			files = append(files, &fileInfo)
+		}
 
+		// claim the files
+		for i := range files {
+			reqFile := request.Files[i]
+
+			// try claiming the file
 			if err := files[i].Claim(request.UserId, reqFile.FileHash, reqFile.ClaimMode); err != nil {
+				// we do not return the error imediately so we can build a full list of rejected files
+				// and report them back all at once
 				log.Error().Err(err).Msg("Failed to claim file")
 				rejectedFiles = append(rejectedFiles, files[i])
 			}
@@ -96,10 +103,10 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 			return ErrRejectedFiles
 		}
 
+		// build the mset params
 		mSetParams := make([]any, 0, len(request.Files)*3)
-		for i, file := range request.Files {
-			fileInfo := models.NewFileInfo(file.FileId, file.FileHash, request.BranchName)
-			mSetParams = append(mSetParams, keys[i], "$", *fileInfo)
+		for i, file := range files {
+			mSetParams = append(mSetParams, keys[i], "$", *file)
 		}
 
 		log.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
