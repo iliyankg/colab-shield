@@ -10,6 +10,7 @@ import (
 	pb "github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -27,8 +28,8 @@ var claimFilesCmd = &cobra.Command{
 		}
 
 		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
-		fileClaimRequests := make([]*pb.FileClaimRequest, 0, len(filesToClaim))
-		err = utils.BuildFileClaimRequests(&fileClaimRequests, filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
+		claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
+		err = utils.BuildFileClaimRequests(&claimFileInfos, filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
@@ -38,11 +39,15 @@ var claimFilesCmd = &cobra.Command{
 		conn, client := client.NewColabShieldClient(ctx, serverAddress)
 		defer conn.Close()
 
+		mdCtx := metadata.Pairs(
+			"projectId", gitRepo,
+			"userId", gitUser,
+		)
+		ctx = metadata.NewOutgoingContext(ctx, mdCtx)
+
 		payload := &pb.ClaimFilesRequest{
-			ProjectId:  gitRepo,
-			UserId:     gitUser,
 			BranchName: gitBranch,
-			Files:      fileClaimRequests,
+			Files:      claimFileInfos,
 		}
 
 		response, err := client.Claim(ctx, payload)
