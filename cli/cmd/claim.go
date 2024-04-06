@@ -39,11 +39,11 @@ var claimFilesCmd = &cobra.Command{
 		conn, client := client.NewColabShieldClient(ctx, serverAddress)
 		defer conn.Close()
 
-		mdCtx := metadata.Pairs(
+		metaInfo := metadata.Pairs(
 			"projectId", gitRepo,
 			"userId", gitUser,
 		)
-		ctx = metadata.NewOutgoingContext(ctx, mdCtx)
+		ctx = metadata.NewOutgoingContext(ctx, metaInfo)
 
 		payload := &pb.ClaimFilesRequest{
 			BranchName: gitBranch,
