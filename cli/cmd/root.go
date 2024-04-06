@@ -1,6 +1,11 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"os"
+
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+)
 
 var (
 	serverAddress string
@@ -27,6 +32,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&gitBranch, "gitBranch", "b", "", "git branch")
 	rootCmd.MarkFlagRequired("gitBranch")
 
+	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(initProjectCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(claimFilesCmd)
@@ -35,5 +41,11 @@ func init() {
 
 // Execute executes the root command.
 func Execute() error {
+	// Ensure context is root of a git repository
+	if _, err := os.Stat(".git"); os.IsNotExist(err) {
+		log.Error().Msg("Make sure you are in the root of a git repository!")
+		log.Fatal().Msg(".git folder does not exist")
+	}
+
 	return rootCmd.Execute()
 }

@@ -27,6 +27,7 @@ func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 		return nil, ErrMissingMetadata
 	}
 
+	// Get userId and projectId from metadata
 	userIds := md.Get("userId")
 	if len(userIds) == 0 {
 		return nil, ErrMissingOrInvalidUserId
