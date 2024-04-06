@@ -3,35 +3,43 @@ package server
 import (
 	"context"
 	"errors"
-	"os"
 
-	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+)
+
+type colabShieldContextKey string
+
+const (
+	UserIdKey    colabShieldContextKey = "userId"
+	ProjectIdKey colabShieldContextKey = "projectId"
 )
 
 var (
+	ErrMissingMetadata           = errors.New("missing metadata")
 	ErrMissingOrInvalidUserId    = errors.New("missing or invalid userId")
 	ErrMissingOrInvalidProjectId = errors.New("missing or invalid projectId")
 )
 
 func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	userId, ok := ctx.Value("userId").(string)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
+		return nil, ErrMissingMetadata
+	}
+
+	userIds := md.Get("userId")
+	if len(userIds) == 0 {
 		return nil, ErrMissingOrInvalidUserId
 	}
-	projectId, ok := ctx.Value("projectId").(string)
-	if !ok {
+	projectIds := md.Get("projectId")
+	if len(projectIds) == 0 {
 		return nil, ErrMissingOrInvalidProjectId
 	}
 
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("userId", userId).
-		Str("projectId", projectId).
-		Str("method", info.FullMethod).
-		Logger()
+	userId := userIds[0]
+	projectId := projectIds[0]
 
-	ctx = logger.WithContext(ctx)
+	ctx = buildCollabShieldContext(ctx, userId, projectId, info.FullMethod)
 
 	resp, err := handler(ctx, req)
 
