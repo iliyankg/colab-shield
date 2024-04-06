@@ -53,6 +53,7 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
 	log := zerolog.Ctx(ctx)
 	// Update metadata for logger for this request.
+	// TODO: Move this to a more appropriate place to eliminate how hacky this is.
 	*log = log.With().Str("branchName", request.BranchName).Logger()
 
 	userId := userIdFromCtx(ctx)
