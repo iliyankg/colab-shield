@@ -23,6 +23,7 @@ service ColabShield {
     rpc ListProjects(google.protobuf.Empty) returns (ListProjectsResponse) {}
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
     rpc Claim(ClaimFilesRequest) returns (ClaimFilesResponse) {}
+    rpc Update(UpdateFilesRequest) returns (UpdateFilesResponse) {}
 }
 
 // ----------------------------------------
@@ -82,12 +83,18 @@ message ClaimFilesResponse {
     repeated FileInfo rejectedFiles = 2;
 }
 
-message FileUpdateRequest {
+message UpdateFileInfo {
     string fileId = 1;
-    string fileHash = 2;
-    string branchName = 3;
+    string oldHash = 2;
+    string fileHash = 3;
+    string branchName = 4;
 }
 
-message FileUpdateResponse {
+message UpdateFilesRequest {
+    string branchName = 1;
+    repeated UpdateFileInfo files = 2;
+}
+
+message UpdateFilesResponse {
     Status status = 1;
 }

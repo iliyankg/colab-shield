@@ -1,54 +1,44 @@
 package cmd
 
 import (
-	"context"
-	"time"
-
 	"github.com/iliyankg/colab-shield/cli/client"
 	"github.com/iliyankg/colab-shield/cli/gitutils"
-	"github.com/iliyankg/colab-shield/cli/utils"
 	pb "github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 )
 
 var (
 	filesToClaim []string
 )
 
+func init() {
+	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
+	claimFilesCmd.MarkFlagRequired("file")
+}
+
 var claimFilesCmd = &cobra.Command{
 	Use:   "claim",
 	Short: "Claim file(s) for editing",
 	Long:  `Claim file(s) for editing`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hashes, err := gitutils.GetGitBlobHashes(filesToClaim)
+		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, filesToClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
 		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
-		claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
-		err = utils.BuildFileClaimRequests(&claimFileInfos, filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
+
+		// TODO: Implement proper claim mode functionality
+		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := buildContext(gitRepo, gitUser)
 		defer cancel()
 		conn, client := client.NewColabShieldClient(ctx, serverAddress)
 		defer conn.Close()
-
-		metaInfo := metadata.Pairs(
-			"projectId", gitRepo,
-			"userId", gitUser,
-		)
-		ctx = metadata.NewOutgoingContext(ctx, metaInfo)
-
-		payload := &pb.ClaimFilesRequest{
-			BranchName: gitBranch,
-			Files:      claimFileInfos,
-		}
 
 		response, err := client.Claim(ctx, payload)
 		if err != nil {
@@ -61,7 +51,22 @@ var claimFilesCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
-	claimFilesCmd.MarkFlagRequired("file")
+func newClaimFilesRequest(files []string, hashes []string, claimMode pb.ClaimMode) (*pb.ClaimFilesRequest, error) {
+	if len(files) != len(hashes) {
+		return nil, ErrFileToHashMissmatch
+	}
+
+	claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
+	for i, file := range files {
+		claimFileInfos = append(claimFileInfos, &pb.ClaimFileInfo{
+			FileId:    file,
+			FileHash:  hashes[i],
+			ClaimMode: claimMode,
+		})
+	}
+
+	return &pb.ClaimFilesRequest{
+		BranchName: gitBranch,
+		Files:      claimFileInfos,
+	}, nil
 }
