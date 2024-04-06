@@ -37,8 +37,9 @@ func main() {
 	})
 
 	// Create gRPC server
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(server.UnaryInterceptor),
+	)
 	pb.RegisterColabShieldServer(grpcServer, server.NewColabShieldServer(redisClient))
 
 	// Listen on port

@@ -9,6 +9,7 @@ import (
 	"github.com/iliyankg/colab-shield/backend/models"
 	pb "github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -50,12 +51,19 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 }
 
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
-	log.Info().Msgf("Claiming files for project %s, branch %s, user %s", request.ProjectId, request.BranchName, request.UserId)
+	log := zerolog.Ctx(ctx)
+	// Update metadata for logger for this request.
+	*log = log.With().Str("branchName", request.BranchName).Logger()
+
+	userId := userIdFromCtx(ctx)
+	projectId := projectIdFromCtx(ctx)
+
+	log.Info().Msgf("Claiming... %d files", len(request.Files))
 
 	files := make([]*models.FileInfo, 0, len(request.Files))
 	rejectedFiles := make([]*models.FileInfo, 0)
 	keys := make([]string, 0, len(request.Files))
-	keysFromFileClaimRequests(&keys, request.ProjectId, request.Files)
+	keysFromFileClaimRequests(&keys, projectId, request.Files)
 
 	// Watch function to ensure keys do not get modified by another client while this transaction
 	// is in progress
@@ -91,7 +99,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 			reqFile := request.Files[i]
 
 			// try claiming the file
-			if err := files[i].Claim(request.UserId, reqFile.FileHash, reqFile.ClaimMode); err != nil {
+			if err := files[i].Claim(userId, reqFile.FileHash, reqFile.ClaimMode); err != nil {
 				// we do not return the error imediately so we can build a full list of rejected files
 				// and report them back all at once
 				log.Error().Err(err).Msg("Failed to claim file")
@@ -135,6 +143,8 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 		log.Error().Err(err).Msg("Failed to claim files")
 		return nil, err
 	}
+
+	log.Info().Msg("Claiming successful")
 
 	// TODO: Consider returning the files that were claimed succesfully
 	return &pb.ClaimFilesResponse{
