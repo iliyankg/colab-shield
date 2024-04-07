@@ -26,6 +26,7 @@ const (
 	ColabShield_ListFiles_FullMethodName    = "/colabshield.ColabShield/ListFiles"
 	ColabShield_Claim_FullMethodName        = "/colabshield.ColabShield/Claim"
 	ColabShield_Update_FullMethodName       = "/colabshield.ColabShield/Update"
+	ColabShield_Release_FullMethodName      = "/colabshield.ColabShield/Release"
 )
 
 // ColabShieldClient is the client API for ColabShield service.
@@ -38,6 +39,7 @@ type ColabShieldClient interface {
 	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
 	Claim(ctx context.Context, in *ClaimFilesRequest, opts ...grpc.CallOption) (*ClaimFilesResponse, error)
 	Update(ctx context.Context, in *UpdateFilesRequest, opts ...grpc.CallOption) (*UpdateFilesResponse, error)
+	Release(ctx context.Context, in *ReleaseFilesRequest, opts ...grpc.CallOption) (*ReleaseFilesResponse, error)
 }
 
 type colabShieldClient struct {
@@ -102,6 +104,15 @@ func (c *colabShieldClient) Update(ctx context.Context, in *UpdateFilesRequest, 
 	return out, nil
 }
 
+func (c *colabShieldClient) Release(ctx context.Context, in *ReleaseFilesRequest, opts ...grpc.CallOption) (*ReleaseFilesResponse, error) {
+	out := new(ReleaseFilesResponse)
+	err := c.cc.Invoke(ctx, ColabShield_Release_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ColabShieldServer is the server API for ColabShield service.
 // All implementations must embed UnimplementedColabShieldServer
 // for forward compatibility
@@ -112,6 +123,7 @@ type ColabShieldServer interface {
 	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
 	Claim(context.Context, *ClaimFilesRequest) (*ClaimFilesResponse, error)
 	Update(context.Context, *UpdateFilesRequest) (*UpdateFilesResponse, error)
+	Release(context.Context, *ReleaseFilesRequest) (*ReleaseFilesResponse, error)
 	mustEmbedUnimplementedColabShieldServer()
 }
 
@@ -136,6 +148,9 @@ func (UnimplementedColabShieldServer) Claim(context.Context, *ClaimFilesRequest)
 }
 func (UnimplementedColabShieldServer) Update(context.Context, *UpdateFilesRequest) (*UpdateFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (UnimplementedColabShieldServer) Release(context.Context, *ReleaseFilesRequest) (*ReleaseFilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Release not implemented")
 }
 func (UnimplementedColabShieldServer) mustEmbedUnimplementedColabShieldServer() {}
 
@@ -258,6 +273,24 @@ func _ColabShield_Update_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ColabShield_Release_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ColabShieldServer).Release(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ColabShield_Release_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ColabShieldServer).Release(ctx, req.(*ReleaseFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ColabShield_ServiceDesc is the grpc.ServiceDesc for ColabShield service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -288,6 +321,10 @@ var ColabShield_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Update",
 			Handler:    _ColabShield_Update_Handler,
+		},
+		{
+			MethodName: "Release",
+			Handler:    _ColabShield_Release_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

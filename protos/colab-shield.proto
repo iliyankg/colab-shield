@@ -24,6 +24,7 @@ service ColabShield {
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
     rpc Claim(ClaimFilesRequest) returns (ClaimFilesResponse) {}
     rpc Update(UpdateFilesRequest) returns (UpdateFilesResponse) {}
+    rpc Release(ReleaseFilesRequest) returns (ReleaseFilesResponse) {}
 }
 
 // ----------------------------------------
@@ -96,6 +97,16 @@ message UpdateFilesRequest {
 }
 
 message UpdateFilesResponse {
+    Status status = 1;
+    repeated FileInfo rejectedFiles = 2;
+}
+
+message ReleaseFilesRequest {
+    string branchName = 1;
+    repeated string fileIds = 2;
+}
+
+message ReleaseFilesResponse {
     Status status = 1;
     repeated FileInfo rejectedFiles = 2;
 }
