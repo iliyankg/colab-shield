@@ -70,8 +70,10 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 		return nil, err
 	}
 
+	logger.Info().Msg("Updating successful")
+
 	return &pb.UpdateFilesResponse{
-		Status: pb.Status_ERROR,
+		Status: pb.Status_OK,
 	}, nil
 }
 
