@@ -40,7 +40,7 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis
 	// Watch function to ensure keys do not get modified by another request while this transaction
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
-		result, err := tx.JSONMGet(ctx, "$", keys...).Result()
+		result, err := tx.JSONMGet(ctx, ".", keys...).Result()
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to read keys from Redis hash")
 			return err
