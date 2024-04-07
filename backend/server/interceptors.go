@@ -31,18 +31,23 @@ func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 
 	// Get userId and projectId from metadata
 	userIds := md.Get("userId")
-	if len(userIds) == 0 {
+	if len(userIds) != 1 {
 		return nil, ErrMissingOrInvalidUserId
 	}
 	projectIds := md.Get("projectId")
-	if len(projectIds) == 0 {
+	if len(projectIds) != 1 {
 		return nil, ErrMissingOrInvalidProjectId
 	}
 
-	userId := userIds[0]
-	projectId := projectIds[0]
+	if userIds[0] == "" {
+		return nil, ErrMissingOrInvalidUserId
+	}
 
-	ctx = buildCollabShieldContext(ctx, userId, projectId, info.FullMethod)
+	if projectIds[0] == "" {
+		return nil, ErrMissingOrInvalidProjectId
+	}
+
+	ctx = buildCollabShieldContext(ctx, userIds[0], projectIds[0], info.FullMethod)
 
 	resp, err := handler(ctx, req)
 
