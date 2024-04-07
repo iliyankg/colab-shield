@@ -8,8 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	filesToClaim []string
+)
+
 func init() {
-	claimFilesCmd.Flags().StringArrayVarP(&files, "file", "f", []string{}, "files to lock")
+	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
 }
 
@@ -18,15 +22,15 @@ var claimFilesCmd = &cobra.Command{
 	Short: "Claim file(s) for editing",
 	Long:  `Claim file(s) for editing`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, files)
+		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, filesToClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
-		log.Info().Msgf("Git hash for files %s: %s", files, hashes)
+		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
 
 		// TODO: Implement proper claim mode functionality
-		payload, err := newClaimFilesRequest(files, hashes, pb.ClaimMode_EXCLUSIVE)
+		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
@@ -52,7 +56,7 @@ func newClaimFilesRequest(files []string, hashes []string, claimMode pb.ClaimMod
 		return nil, ErrFileToHashMissmatch
 	}
 
-	claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(files))
+	claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
 	for i, file := range files {
 		claimFileInfos = append(claimFileInfos, &pb.ClaimFileInfo{
 			FileId:    file,

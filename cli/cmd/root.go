@@ -12,7 +12,6 @@ var (
 	gitRepo       string
 	gitUser       string
 	gitBranch     string
-	files         []string // used in and common between child commands
 	rootCmd       = &cobra.Command{
 		Use:   "colab-shield",
 		Short: "A CLI tool for colaborative work with hard to merge files.",
