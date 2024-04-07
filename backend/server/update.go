@@ -66,7 +66,7 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 			RejectedFiles: protoRejectedFiles,
 		}, nil
 	} else if err != nil {
-		logger.Error().Err(err).Msg("Failed to claim files")
+		logger.Error().Err(err).Msg("Failed to update files")
 		return nil, err
 	}
 
