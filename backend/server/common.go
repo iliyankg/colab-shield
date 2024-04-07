@@ -10,6 +10,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type MissingFileHandler func(idx int) *models.FileInfo
+type UnmarshalFailHandler func(idx int, err error) error
+
 // parseFileInfos parses the file infos from the Redis hash and creates new ones where appropriate.
 func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFileHandler MissingFileHandler, unmarshalFailHandler UnmarshalFailHandler) error {
 	// parse all files from the Redis and create new where appropriate
