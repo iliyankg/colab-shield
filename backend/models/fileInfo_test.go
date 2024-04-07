@@ -142,7 +142,7 @@ func TestFileInfo_Update(t *testing.T) {
 		fi.UserIds = []string{"userId"}
 
 		// Action
-		if err := fi.Update("userId", "fileHashTwo", "branchNameTwo"); err != nil {
+		if err := fi.Update("userId", "fileHash", "fileHashTwo", "branchNameTwo"); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
@@ -160,8 +160,19 @@ func TestFileInfo_Update(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Update("userId", "fileHashTwo", "branchNameTwo"); err != ErrUserNotOwner {
+		if err := fi.Update("userId", "fileHash", "fileHashTwo", "branchNameTwo"); err != ErrUserNotOwner {
 			t.Errorf("Expected error to be ErrUserNotOwner, got %v", err)
+		}
+	})
+
+	t.Run("Update Out of Date", func(t *testing.T) {
+		// Setup
+		fi := NewFileInfo("fileId", "fileHash", "branchName")
+		fi.UserIds = []string{"userId"}
+
+		// Action
+		if err := fi.Update("userId", "fileHashTwo", "fileHash", "branchNameTwo"); err != ErrFileOutOfDate {
+			t.Errorf("Expected error to be ErrFileOutOfDate, got %v", err)
 		}
 	})
 }

@@ -3,33 +3,43 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
 
 	pb "github.com/iliyankg/colab-shield/protos"
-	"github.com/rs/zerolog"
 )
 
-func buildCollabShieldContext(ctx context.Context, userId string, projectId string, method string) context.Context {
-	ctx = context.WithValue(ctx, UserIdKey, userId)
-	ctx = context.WithValue(ctx, ProjectIdKey, projectId)
-
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Str("userId", userId).
-		Str("projectId", projectId).
-		Str("method", method).
-		Logger()
-
-	return logger.WithContext(ctx)
-}
+type FileIdParser func(any) string
 
 func buildRedisKeyForFile(projectId string, fileId string) string {
 	return fmt.Sprintf("project:%s:file:%s", projectId, fileId)
 }
 
-func keysFromFileClaimRequests(target *[]string, projectId string, files []*pb.ClaimFileInfo) {
-	for _, file := range files {
-		*target = append(*target, buildRedisKeyForFile(projectId, file.FileId))
+func keysFromFileRequests(projectId string, pbFiles any, outKeys *[]string) {
+	claimFileInfoParser := func(file any) string {
+		return file.(*pb.ClaimFileInfo).FileId
+	}
+
+	updateFileInfoParser := func(file any) string {
+		return file.(*pb.UpdateFileInfo).FileId
+	}
+
+	var parser FileIdParser = nil
+	switch (pbFiles).(type) {
+	case []*pb.ClaimFileInfo:
+		parser = claimFileInfoParser
+	case []*pb.UpdateFileInfo:
+		parser = updateFileInfoParser
+	default:
+		return
+	}
+
+	castPbFiles := pbFiles.([]*any)
+	if len(castPbFiles) == 0 {
+		return
+	}
+
+	for _, file := range castPbFiles {
+		fileId := parser(file)
+		*outKeys = append(*outKeys, buildRedisKeyForFile(projectId, fileId))
 	}
 }
 

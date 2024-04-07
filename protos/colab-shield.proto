@@ -97,4 +97,5 @@ message UpdateFilesRequest {
 
 message UpdateFilesResponse {
     Status status = 1;
+    repeated FileInfo rejectedFiles = 2;
 }

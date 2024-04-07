@@ -63,9 +63,13 @@ func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode
 }
 
 // Update updates the file hash for a file only if the user is an owner
-func (fi *FileInfo) Update(userId string, fileHash string, branchName string) error {
+func (fi *FileInfo) Update(userId string, oldHash string, fileHash string, branchName string) error {
 	if !fi.CheckOwner(userId) {
 		return ErrUserNotOwner
+	}
+
+	if fi.FileHash != oldHash {
+		return ErrFileOutOfDate
 	}
 
 	fi.FileHash = fileHash
@@ -139,8 +143,8 @@ func (fi *FileInfo) ToProto() *pb.FileInfo {
 }
 
 // FileInfosToProto converts a slice of FileInfo to a slice of pb.FileInfo
-func FileInfosToProto(target *[]*pb.FileInfo, fileInfos []*FileInfo) {
+func FileInfosToProto(fileInfos []*FileInfo, outTarget *[]*pb.FileInfo) {
 	for _, fi := range fileInfos {
-		*target = append(*target, fi.ToProto())
+		*outTarget = append(*outTarget, fi.ToProto())
 	}
 }

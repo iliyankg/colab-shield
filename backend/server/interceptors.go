@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"errors"
+	"os"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -45,4 +47,18 @@ func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 	resp, err := handler(ctx, req)
 
 	return resp, err
+}
+
+func buildCollabShieldContext(ctx context.Context, userId string, projectId string, method string) context.Context {
+	ctx = context.WithValue(ctx, UserIdKey, userId)
+	ctx = context.WithValue(ctx, ProjectIdKey, projectId)
+
+	logger := zerolog.New(os.Stdout).With().
+		Timestamp().
+		Str("userId", userId).
+		Str("projectId", projectId).
+		Str("method", method).
+		Logger()
+
+	return logger.WithContext(ctx)
 }
