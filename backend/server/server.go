@@ -70,3 +70,14 @@ func (s *ColabShieldServer) Update(ctx context.Context, request *pb.UpdateFilesR
 
 	return updateHandler(ctx, logger, s.redisClient, userId, projectId, request)
 }
+
+func (s *ColabShieldServer) Release(ctx context.Context, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
+	logger := zerolog.Ctx(ctx).
+		With().
+		Logger()
+
+	userId := userIdFromCtx(ctx)
+	projectId := projectIdFromCtx(ctx)
+
+	return releaseHandler(ctx, logger, s.redisClient, userId, projectId, request)
+}
