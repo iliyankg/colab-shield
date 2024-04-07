@@ -69,7 +69,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 		return nil, err
 	}
 
-	logger.Info().Msg("Updating successful")
+	logger.Info().Msg("Releasing successful")
 
 	return &pb.ReleaseFilesResponse{
 		Status: pb.Status_OK,
