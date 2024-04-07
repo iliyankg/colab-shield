@@ -17,3 +17,4 @@ files[] = {"path":"protos/colab-shield.proto","metaData":{}}
 
 [config.relations.apiDefinition.metaData]
 type = proto:3
+rootFiles[] = protos/colab-shield.proto
