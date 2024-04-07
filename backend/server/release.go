@@ -88,5 +88,6 @@ func releaseFiles(userId string, fileInfos []*models.FileInfo, outRejectedFiles 
 			// and report them back all at once
 			*outRejectedFiles = append(*outRejectedFiles, fileInfos[i])
 		}
+
 	}
 }
