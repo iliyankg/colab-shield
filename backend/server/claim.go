@@ -14,6 +14,13 @@ type MissingFileHandler func(idx int) *models.FileInfo
 type UnmarshalFailHandler func(idx int, err error) error
 
 func claimHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
+	if len(request.Files) == 0 {
+		logger.Warn().Msg("No files to claim")
+		return &pb.ClaimFilesResponse{
+			Status: pb.Status_OK,
+		}, nil
+	}
+
 	logger.Info().Msgf("Claiming... %d files", len(request.Files))
 
 	files := make([]*models.FileInfo, 0, len(request.Files))

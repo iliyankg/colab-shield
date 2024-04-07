@@ -68,6 +68,5 @@ func (s *ColabShieldServer) Update(ctx context.Context, request *pb.UpdateFilesR
 	userId := userIdFromCtx(ctx)
 	projectId := projectIdFromCtx(ctx)
 
-	return s.updateHandler(ctx, logger, s.redisClient, userId, projectId, request)
+	return updateHandler(ctx, logger, s.redisClient, userId, projectId, request)
 }
-

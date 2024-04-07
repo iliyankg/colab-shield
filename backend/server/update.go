@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func (s *ColabShieldServer) updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.UpdateFilesRequest) (*pb.UpdateFilesResponse, error) {
+func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.UpdateFilesRequest) (*pb.UpdateFilesResponse, error) {
 	logger.Info().Msgf("Updating... %d files", len(request.Files))
 
 	files := make([]*models.FileInfo, 0, len(request.Files))

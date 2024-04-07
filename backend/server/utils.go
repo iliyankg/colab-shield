@@ -7,38 +7,23 @@ import (
 	pb "github.com/iliyankg/colab-shield/protos"
 )
 
-type FileIdParser func(any) string
+// Represents a type constraint for FileId field and getter
+// in the respective proto messages. Used for generics.
+type protoFileId interface {
+	*pb.ClaimFileInfo | *pb.UpdateFileInfo
+	GetFileId() string
+}
 
+// buildRedisKeyForFile builds the Redis key for the given project and file IDs
 func buildRedisKeyForFile(projectId string, fileId string) string {
 	return fmt.Sprintf("project:%s:file:%s", projectId, fileId)
 }
 
-func keysFromFileRequests(projectId string, pbFiles any, outKeys *[]string) {
-	claimFileInfoParser := func(file any) string {
-		return file.(*pb.ClaimFileInfo).FileId
-	}
-
-	updateFileInfoParser := func(file any) string {
-		return file.(*pb.UpdateFileInfo).FileId
-	}
-
-	var parser FileIdParser = nil
-	switch (pbFiles).(type) {
-	case []*pb.ClaimFileInfo:
-		parser = claimFileInfoParser
-	case []*pb.UpdateFileInfo:
-		parser = updateFileInfoParser
-	default:
-		return
-	}
-
-	castPbFiles := pbFiles.([]*any)
-	if len(castPbFiles) == 0 {
-		return
-	}
-
-	for _, file := range castPbFiles {
-		fileId := parser(file)
+// keysFromFileRequests extracts the file IDs from the given file requests
+// and builds the Redis keys for them
+func keysFromFileRequests[T protoFileId](projectId string, pbFiles []T, outKeys *[]string) {
+	for _, file := range pbFiles {
+		fileId := file.GetFileId()
 		*outKeys = append(*outKeys, buildRedisKeyForFile(projectId, fileId))
 	}
 }
