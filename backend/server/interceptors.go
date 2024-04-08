@@ -57,6 +57,7 @@ func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 }
 
 func buildCollabShieldContext(ctx context.Context, userId string, projectId string, method string) context.Context {
+	// TODO: Add request guid to Ctx and the logger. Consider taking it from the metadata so it comes in from the client for end-to-end tracing.
 	ctx = context.WithValue(ctx, UserIdKey, userId)
 	ctx = context.WithValue(ctx, ProjectIdKey, projectId)
 

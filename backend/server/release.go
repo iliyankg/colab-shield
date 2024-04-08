@@ -50,8 +50,6 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 			return err
 		}
 
-		// FIXME: &files could contain nil entries and thats not good.
-		// We should probably return an error if we encounter a nil entry
 		err = parseFileInfos(result, &files, missingFileHandler, unmarshalFailHandler)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
