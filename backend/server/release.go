@@ -72,7 +72,9 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 
 	logger.Info().Msg("Releasing successful")
 
-	return &pb.ReleaseFilesResponse{}, nil
+	return &pb.ReleaseFilesResponse{
+		Status: pb.Status_OK,
+	}, nil
 }
 
 func releaseFiles(userId string, fileInfos []*models.FileInfo, outRejectedFiles *[]*models.FileInfo) {

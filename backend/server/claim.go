@@ -79,7 +79,9 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis
 	logger.Info().Msg("Claiming successful")
 
 	// TODO: Consider returning the files that were claimed succesfully
-	return &pb.ClaimFilesResponse{}, nil
+	return &pb.ClaimFilesResponse{
+		Status: pb.Status_OK,
+	}, nil
 }
 
 func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*pb.ClaimFileInfo, outRejectedFiles *[]*models.FileInfo) {
