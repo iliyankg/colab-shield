@@ -54,7 +54,7 @@ func NewBlankFileInfo() *FileInfo {
 // NewMissingFileInfo creates a new FileInfo that is missing
 func NewMissingFileInfo(fileId string) *FileInfo {
 	return &FileInfo{
-		FileId:       "",
+		FileId:       fileId,
 		FileHash:     "",
 		UserIds:      []string{},
 		BranchName:   "",
