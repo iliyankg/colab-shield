@@ -16,47 +16,61 @@ var (
 
 // FileInfo represents a file in the system
 type FileInfo struct {
-	FileId     string       `json:"fileId"`
-	FileHash   string       `json:"fileHash"`
-	UserIds    []string     `json:"userIds"`
-	BranchName string       `json:"branchName"`
-	ClaimMode  pb.ClaimMode `json:"mode"`
+	FileId       string          `json:"fileId"`
+	FileHash     string          `json:"fileHash"`
+	UserIds      []string        `json:"userIds"`
+	BranchName   string          `json:"branchName"`
+	ClaimMode    pb.ClaimMode    `json:"mode"`
+	RejectReason pb.RejectReason `json:"-"` // RejectReason is not stored in db
 }
 
 // NewFileInfo creates a new blank FileInfo with just a File ID
 func NewFileInfo(fileId string, fileHash string, branchName string) *FileInfo {
 	return &FileInfo{
-		FileId:     fileId,
-		FileHash:   fileHash,
-		UserIds:    []string{},
-		BranchName: branchName,
-		ClaimMode:  pb.ClaimMode_UNCLAIMED,
+		FileId:       fileId,
+		FileHash:     fileHash,
+		UserIds:      []string{},
+		BranchName:   branchName,
+		ClaimMode:    pb.ClaimMode_UNCLAIMED,
+		RejectReason: pb.RejectReason_NONE,
+	}
+}
+
+// NewBlankFileInfo creates a new blank without the need for parameters.
+//
+// Ideal for creating a new FileInfo that will be populated later on such as
+// unmarshalling from a database.
+func NewBlankFileInfo() *FileInfo {
+	return &FileInfo{
+		FileId:       "",
+		FileHash:     "",
+		UserIds:      []string{},
+		BranchName:   "",
+		ClaimMode:    pb.ClaimMode_UNCLAIMED,
+		RejectReason: pb.RejectReason_NONE,
 	}
 }
 
 // Claim claims a file for a user
 func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode) error {
 	if claimMode == pb.ClaimMode_UNCLAIMED {
-		return ErrInvalidClaimMode
+		return fi.invalidClaimMode()
 	}
 
 	// Already claimed by someone else.
 	if fi.ClaimMode == pb.ClaimMode_EXCLUSIVE {
-		return ErrFileAlreadyClaimed
+		return fi.alreadyClaimed()
 	}
 
 	if fi.FileHash != fileHash {
-		return ErrFileOutOfDate
+		return fi.fileOutOfDate()
 	}
 
 	if fi.ClaimMode == pb.ClaimMode_SHARED && claimMode == pb.ClaimMode_EXCLUSIVE {
-		return ErrInvalidClaimMode
+		return fi.invalidClaimMode()
 	}
 
-	if err := fi.addOwner(userId); err != nil {
-		return err
-	}
-
+	fi.addOwner(userId)
 	fi.ClaimMode = claimMode
 
 	return nil
@@ -65,11 +79,11 @@ func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode
 // Update updates the file hash for a file only if the user is an owner
 func (fi *FileInfo) Update(userId string, oldHash string, fileHash string, branchName string) error {
 	if !fi.CheckOwner(userId) {
-		return ErrUserNotOwner
+		return fi.userNotOwner()
 	}
 
 	if fi.FileHash != oldHash {
-		return ErrFileOutOfDate
+		return fi.fileOutOfDate()
 	}
 
 	fi.FileHash = fileHash
@@ -101,15 +115,13 @@ func (fi *FileInfo) CheckOwner(userId string) bool {
 }
 
 // addOwner adds a userId to the FileInfo
-// Adding an owner can only happen through claiming.
-func (fi *FileInfo) addOwner(userId string) error {
+// adding an owner should only be done through claiming
+func (fi *FileInfo) addOwner(userId string) {
 	if fi.CheckOwner(userId) {
-		return nil
+		return
 	}
 
 	fi.UserIds = append(fi.UserIds, userId)
-
-	return nil
 }
 
 // removeOwner removes a userId from the FileInfo
@@ -121,6 +133,26 @@ func (fi *FileInfo) removeOwner(userId string) error {
 		}
 	}
 
+	return fi.userNotOwner()
+}
+
+func (fi *FileInfo) invalidClaimMode() error {
+	fi.RejectReason = pb.RejectReason_INVALID_CLAIM_MODE
+	return ErrInvalidClaimMode
+}
+
+func (fi *FileInfo) alreadyClaimed() error {
+	fi.RejectReason = pb.RejectReason_ALREADY_CLAIMED
+	return ErrFileAlreadyClaimed
+}
+
+func (fi *FileInfo) fileOutOfDate() error {
+	fi.RejectReason = pb.RejectReason_OUT_OF_DATE
+	return ErrFileOutOfDate
+}
+
+func (fi *FileInfo) userNotOwner() error {
+	fi.RejectReason = pb.RejectReason_NOT_OWNER
 	return ErrUserNotOwner
 }
 
@@ -134,11 +166,12 @@ func (fi FileInfo) MarshalBinary() ([]byte, error) {
 // ToProto converts a FileInfo to a pb.FileInfo
 func (fi *FileInfo) ToProto() *pb.FileInfo {
 	return &pb.FileInfo{
-		FileId:     fi.FileId,
-		FileHash:   fi.FileHash,
-		UserIds:    fi.UserIds,
-		BranchName: fi.BranchName,
-		ClaimMode:  fi.ClaimMode,
+		FileId:       fi.FileId,
+		FileHash:     fi.FileHash,
+		UserIds:      fi.UserIds,
+		BranchName:   fi.BranchName,
+		ClaimMode:    fi.ClaimMode,
+		RejectReason: fi.RejectReason,
 	}
 }
 

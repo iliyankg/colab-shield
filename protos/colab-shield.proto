@@ -12,6 +12,14 @@ enum ClaimMode {
     SHARED = 2;
 }
 
+enum RejectReason {
+    NONE = 0;
+    ALREADY_CLAIMED = 1;
+    OUT_OF_DATE = 2;
+    NOT_OWNER = 3;
+    INVALID_CLAIM_MODE = 4;
+}
+
 service ColabShield {
     rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse) {}
     rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
@@ -53,6 +61,7 @@ message FileInfo {
     repeated string userIds = 3;
     string branchName = 4;
     ClaimMode claimMode = 5;
+    RejectReason rejectReason = 6;
 }
 
 message ListFilesResponse {

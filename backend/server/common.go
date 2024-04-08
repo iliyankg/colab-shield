@@ -16,6 +16,7 @@ type MissingFileHandler func(idx int) *models.FileInfo
 type UnmarshalFailHandler func(idx int, err error) error
 
 var (
+	// Common status error for rejected files regardless of internal reason.
 	ErrRejectedFiles = status.Error(codes.FailedPrecondition, "rejected files")
 )
 
@@ -34,8 +35,8 @@ func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFile
 		}
 
 		// unmarshal the JSON from the Redis hash
-		var fileInfo models.FileInfo
-		if err := json.Unmarshal([]byte(res.(string)), &fileInfo); err != nil {
+		fileInfo := models.NewBlankFileInfo()
+		if err := json.Unmarshal([]byte(res.(string)), fileInfo); err != nil {
 			if unmarshalFailHandler == nil {
 				continue
 			}
@@ -46,7 +47,7 @@ func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFile
 			}
 		}
 
-		*outFileInfos = append(*outFileInfos, &fileInfo)
+		*outFileInfos = append(*outFileInfos, fileInfo)
 	}
 
 	return nil
@@ -56,7 +57,7 @@ func setFiles(ctx context.Context, logger zerolog.Logger, redisClient *redis.Cli
 	// build the mset params
 	mSetParams := make([]any, 0, len(fileInfos)*3)
 	for i, file := range fileInfos {
-		mSetParams = append(mSetParams, keys[i], "$", *file)
+		mSetParams = append(mSetParams, keys[i], ".", *file)
 	}
 
 	logger.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
