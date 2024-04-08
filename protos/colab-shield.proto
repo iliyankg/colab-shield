@@ -24,6 +24,7 @@ enum RejectReason {
     OUT_OF_DATE = 2;
     NOT_OWNER = 3;
     INVALID_CLAIM_MODE = 4;
+    MISSING = 5;
 }
 
 service ColabShield {

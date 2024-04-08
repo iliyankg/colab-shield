@@ -11,6 +11,14 @@ import (
 )
 
 func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.UpdateFilesRequest) (*pb.UpdateFilesResponse, error) {
+	if len(request.Files) == 0 {
+		logger.Warn().Msg("No files to update")
+		// TODO: Consider returning an error here
+		return &pb.UpdateFilesResponse{
+			Status: pb.Status_OK,
+		}, nil
+	}
+
 	logger.Info().Msgf("Updating... %d files", len(request.Files))
 
 	files := make([]*models.FileInfo, 0, len(request.Files))
@@ -21,13 +29,14 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 
 	// Handler for missing files in the Redis hash
 	missingFileHandler := func(idx int) *models.FileInfo {
-		return models.NewFileInfo(request.Files[idx].FileId, request.Files[idx].FileHash, request.BranchName)
+		rejectedFiles = append(rejectedFiles, models.NewMissingFileInfo(request.Files[idx].FileId))
+		return nil
 	}
 
 	// Handler for failed unmarshalling of JSON from the Redis hash
 	unmarshalFailHandler := func(idx int, err error) error {
 		logger.Error().Str("key", keys[idx]).Err(err).Msg("Failed to unmarshal JSON from Redis hash")
-		return nil
+		return ErrUnmarshalFail
 	}
 
 	// Watch function to ensure keys do not get modified by another request while this transaction
@@ -43,6 +52,10 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
 			return err
+		}
+
+		if len(rejectedFiles) > 0 {
+			return ErrRejectedFiles
 		}
 
 		updateFiles(userId, request.BranchName, files, request.Files, &rejectedFiles)

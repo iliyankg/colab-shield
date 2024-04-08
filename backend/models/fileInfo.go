@@ -51,6 +51,18 @@ func NewBlankFileInfo() *FileInfo {
 	}
 }
 
+// NewMissingFileInfo creates a new FileInfo that is missing
+func NewMissingFileInfo(fileId string) *FileInfo {
+	return &FileInfo{
+		FileId:       "",
+		FileHash:     "",
+		UserIds:      []string{},
+		BranchName:   "",
+		ClaimMode:    pb.ClaimMode_UNCLAIMED,
+		RejectReason: pb.RejectReason_MISSING,
+	}
+}
+
 // Claim claims a file for a user
 func (fi *FileInfo) Claim(userId string, fileHash string, claimMode pb.ClaimMode) error {
 	if claimMode == pb.ClaimMode_UNCLAIMED {

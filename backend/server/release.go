@@ -11,6 +11,14 @@ import (
 )
 
 func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
+	if len(request.FileIds) == 0 {
+		logger.Warn().Msg("No files to release")
+		// TODO: Consider returning an error here
+		return &pb.ReleaseFilesResponse{
+			Status: pb.Status_OK,
+		}, nil
+	}
+
 	logger.Info().Msgf("Releasing... %d files", len(request.FileIds))
 
 	files := make([]*models.FileInfo, 0, len(request.FileIds))
@@ -21,10 +29,16 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 		keys = append(keys, buildRedisKeyForFile(projectId, fileId))
 	}
 
+	// Handler for missing files in the Redis hash
+	missingFileHandler := func(idx int) *models.FileInfo {
+		rejectedFiles = append(rejectedFiles, models.NewMissingFileInfo(request.FileIds[idx]))
+		return nil
+	}
+
 	// Handler for failed unmarshalling of JSON from the Redis hash
 	unmarshalFailHandler := func(idx int, err error) error {
 		logger.Error().Str("key", keys[idx]).Err(err).Msg("Failed to unmarshal JSON from Redis hash")
-		return nil
+		return ErrUnmarshalFail
 	}
 
 	// Watch function to ensure keys do not get modified by another request while this transaction
@@ -38,10 +52,14 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 
 		// FIXME: &files could contain nil entries and thats not good.
 		// We should probably return an error if we encounter a nil entry
-		err = parseFileInfos(result, &files, nil, unmarshalFailHandler)
+		err = parseFileInfos(result, &files, missingFileHandler, unmarshalFailHandler)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
 			return err
+		}
+
+		if len(rejectedFiles) > 0 {
+			return ErrRejectedFiles
 		}
 
 		releaseFiles(userId, files, &rejectedFiles)
