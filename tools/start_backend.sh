@@ -7,6 +7,9 @@ if docker-compose -f ../docker-compose.yml ps | grep -q "Up"; then
     # Stop the backend service
     docker-compose -f ../docker-compose.yml stop backend
 
+    # Remove the backend service before rebuilding
+    yes Y | docker-compose -f ../docker-compose.yml rm backend
+
     # Rebuild the backend service
     docker-compose -f ../docker-compose.yml build backend
 
@@ -21,6 +24,3 @@ else
     # Tail the logs of the backend service
     docker-compose -f ../docker-compose.yml logs -f backend
 fi
-
-
-
