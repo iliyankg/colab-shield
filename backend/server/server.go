@@ -2,17 +2,12 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	pb "github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/emptypb"
-)
-
-var (
-	ErrRejectedFiles = fmt.Errorf("rejected files")
 )
 
 type ColabShieldServer struct {

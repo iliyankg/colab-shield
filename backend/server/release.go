@@ -63,7 +63,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 		return &pb.ReleaseFilesResponse{
 			Status:        pb.Status_ERROR,
 			RejectedFiles: protoRejectedFiles,
-		}, nil
+		}, ErrRejectedFiles
 	} else if err != nil {
 		logger.Error().Err(err).Msg("Failed to release files")
 		return nil, err

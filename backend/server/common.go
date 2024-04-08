@@ -8,10 +8,16 @@ import (
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type MissingFileHandler func(idx int) *models.FileInfo
 type UnmarshalFailHandler func(idx int, err error) error
+
+var (
+	ErrRejectedFiles = status.Error(codes.FailedPrecondition, "rejected files")
+)
 
 // parseFileInfos parses the file infos from the Redis hash and creates new ones where appropriate.
 func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFileHandler MissingFileHandler, unmarshalFailHandler UnmarshalFailHandler) error {

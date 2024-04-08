@@ -71,7 +71,7 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis
 		return &pb.ClaimFilesResponse{
 			Status:        pb.Status_ERROR,
 			RejectedFiles: protoRejectedFiles,
-		}, nil
+		}, err
 	} else if err != nil {
 		logger.Error().Err(err).Msg("Failed to claim files")
 		return nil, err

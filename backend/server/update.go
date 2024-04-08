@@ -64,7 +64,7 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 		return &pb.UpdateFilesResponse{
 			Status:        pb.Status_ERROR,
 			RejectedFiles: protoRejectedFiles,
-		}, nil
+		}, err
 	} else if err != nil {
 		logger.Error().Err(err).Msg("Failed to update files")
 		return nil, err
