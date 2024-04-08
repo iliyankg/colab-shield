@@ -57,6 +57,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 	err := redisClient.Watch(ctx, watchFn, keys...)
 
 	if errors.Is(err, ErrRejectedFiles) {
+		logger.Info().Msg("Releasing failed due to rejected files")
 		protoRejectedFiles := make([]*pb.FileInfo, 0, len(rejectedFiles))
 		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
