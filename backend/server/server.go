@@ -22,9 +22,7 @@ func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
 }
 
 func (s *ColabShieldServer) HealthCheck(ctx context.Context, _ *emptypb.Empty) (*pb.HealthCheckResponse, error) {
-	return &pb.HealthCheckResponse{
-		Status: pb.Status_OK,
-	}, nil
+	return &pb.HealthCheckResponse{}, nil
 }
 
 func (s *ColabShieldServer) InitProject(ctx context.Context, request *pb.InitProjectRequest) (*pb.InitProjectResponse, error) {

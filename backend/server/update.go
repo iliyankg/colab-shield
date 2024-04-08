@@ -62,7 +62,6 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
 		return &pb.UpdateFilesResponse{
-			Status:        pb.Status_ERROR,
 			RejectedFiles: protoRejectedFiles,
 		}, err
 	} else if err != nil {
@@ -72,9 +71,7 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, redisClient *redi
 
 	logger.Info().Msg("Updating successful")
 
-	return &pb.UpdateFilesResponse{
-		Status: pb.Status_OK,
-	}, nil
+	return &pb.UpdateFilesResponse{}, nil
 }
 
 func updateFiles(userId string, branchName string, fileInfos []*models.FileInfo, pbFiles []*pb.UpdateFileInfo, outRejectedFiles *[]*models.FileInfo) {
