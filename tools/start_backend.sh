@@ -15,6 +15,9 @@ if docker-compose -f ../docker-compose.yml ps | grep -q "Up"; then
 
     # Start the backend service
     docker-compose -f ../docker-compose.yml up backend
+
+    # Stop the backend service
+    docker-compose -f ../docker-compose.yml stop backend
 else
     echo "Docker Compose is not up."
 
@@ -23,4 +26,7 @@ else
 
     # Tail the logs of the backend service
     docker-compose -f ../docker-compose.yml logs -f backend
+
+    # Stop the backend service
+    docker-compose -f ../docker-compose.yml stop backend
 fi
