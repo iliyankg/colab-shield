@@ -6,6 +6,12 @@ package colabshield;
 
 option go_package = "github.com/iliyankg/colab-shield/protos";
 
+enum Status {
+    OK = 0;
+    REJECTED = 1;
+    ERROR = 2;
+}
+
 enum ClaimMode {
     UNCLAIMED = 0;
     EXCLUSIVE = 1;
@@ -42,7 +48,9 @@ message InitProjectRequest {
     string projectId = 1;
 }
 
-message InitProjectResponse {}
+message InitProjectResponse {
+    Status status = 1;
+}
 
 message ListProjectsResponse {
     repeated string projects = 1;
@@ -80,6 +88,7 @@ message ClaimFilesRequest {
 }
 
 message ClaimFilesResponse {
+    Status status = 1;
     repeated FileInfo rejectedFiles = 2;
 }
 
@@ -96,6 +105,7 @@ message UpdateFilesRequest {
 }
 
 message UpdateFilesResponse {
+    Status status = 1;
     repeated FileInfo rejectedFiles = 2;
 }
 
@@ -105,5 +115,6 @@ message ReleaseFilesRequest {
 }
 
 message ReleaseFilesResponse {
+    Status status = 1;
     repeated FileInfo rejectedFiles = 2;
 }
