@@ -65,7 +65,9 @@ message ListProjectsResponse {
 // https://cloud.google.com/apis/design/design_patterns#list_pagination
 // https://stackoverflow.com/questions/73841025/cursor-pagination-with-redisjson
 message ListFilesRequest {
-    string projectId = 1;
+    uint64 pageToken = 1;
+    int64 pageSize = 2;
+    string folderPath = 3;
 }
 
 message FileInfo {
@@ -78,7 +80,10 @@ message FileInfo {
 }
 
 message ListFilesResponse {
-    repeated FileInfo files = 1;
+    uint64 pageToken = 1;
+    uint64 nextPageToken = 2;
+    uint64 totalPages = 3;
+    repeated FileInfo files = 4;
 }
 
 // ----------------------------------------
