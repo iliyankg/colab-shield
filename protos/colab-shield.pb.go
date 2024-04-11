@@ -363,8 +363,11 @@ func (x *ListProjectsResponse) GetProjects() []string {
 }
 
 // ----------------------------------------
-// File Messages
+// List files Messages
 // ----------------------------------------
+// TODO: Pagination?
+// https://cloud.google.com/apis/design/design_patterns#list_pagination
+// https://stackoverflow.com/questions/73841025/cursor-pagination-with-redisjson
 type ListFilesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -546,6 +549,9 @@ func (x *ListFilesResponse) GetFiles() []*FileInfo {
 	return nil
 }
 
+// ----------------------------------------
+// Claim Messages
+// ----------------------------------------
 type ClaimFileInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -719,6 +725,9 @@ func (x *ClaimFilesResponse) GetRejectedFiles() []*FileInfo {
 	return nil
 }
 
+// ----------------------------------------
+// Update Messages
+// ----------------------------------------
 type UpdateFileInfo struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -900,6 +909,9 @@ func (x *UpdateFilesResponse) GetRejectedFiles() []*FileInfo {
 	return nil
 }
 
+// ----------------------------------------
+// Release Messages
+// ----------------------------------------
 type ReleaseFilesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

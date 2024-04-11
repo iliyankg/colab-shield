@@ -32,6 +32,7 @@ service ColabShield {
     rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
     rpc ListProjects(google.protobuf.Empty) returns (ListProjectsResponse) {}
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
+
     rpc Claim(ClaimFilesRequest) returns (ClaimFilesResponse) {}
     rpc Update(UpdateFilesRequest) returns (UpdateFilesResponse) {}
     rpc Release(ReleaseFilesRequest) returns (ReleaseFilesResponse) {}
@@ -58,8 +59,11 @@ message ListProjectsResponse {
 }
 
 // ----------------------------------------
-// File Messages
+// List files Messages
 // ----------------------------------------
+// TODO: Pagination?
+// https://cloud.google.com/apis/design/design_patterns#list_pagination
+// https://stackoverflow.com/questions/73841025/cursor-pagination-with-redisjson
 message ListFilesRequest {
     string projectId = 1;
 }
@@ -77,6 +81,9 @@ message ListFilesResponse {
     repeated FileInfo files = 1;
 }
 
+// ----------------------------------------
+// Claim Messages
+// ----------------------------------------
 message ClaimFileInfo {
     string fileId = 1;
     string fileHash = 2;
@@ -93,6 +100,9 @@ message ClaimFilesResponse {
     repeated FileInfo rejectedFiles = 2;
 }
 
+// ----------------------------------------
+// Update Messages
+// ----------------------------------------
 message UpdateFileInfo {
     string fileId = 1;
     string oldHash = 2;
@@ -110,6 +120,9 @@ message UpdateFilesResponse {
     repeated FileInfo rejectedFiles = 2;
 }
 
+// ----------------------------------------
+// Release Messages
+// ----------------------------------------
 message ReleaseFilesRequest {
     string branchName = 1;
     repeated string fileIds = 2;

@@ -31,7 +31,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "cd tools && ./download_go_deps.sh"
+	"postCreateCommand": "cd tools && sudo chmod +x download_go_deps.sh && ./download_go_deps.sh"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
