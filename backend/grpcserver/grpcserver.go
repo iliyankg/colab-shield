@@ -1,18 +1,47 @@
-package server
+package grpcserver
 
 import (
 	"context"
+	"fmt"
+	"net"
 
 	pb "github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ColabShieldServer struct {
 	pb.UnimplementedColabShieldServer
 	redisClient *redis.Client
+}
+
+func Serve(port int, redisClient *redis.Client) (*grpc.Server, error) {
+	// Create gRPC server
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(UnaryInterceptor),
+	)
+	pb.RegisterColabShieldServer(grpcServer, NewColabShieldServer(redisClient))
+
+	// Listen on port
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
+	if err != nil {
+		log.Error().Err(err).Msg("failed to listen")
+		return nil, err
+	}
+	log.Info().Msgf("Listening on port: %d", port)
+
+	// Serve gRPC server
+	log.Info().Msg("Serving gRPC")
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to serve")
+		return nil, err
+	}
+
+	return grpcServer, nil
 }
 
 func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
@@ -40,10 +69,7 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 		With().
 		Logger()
 
-	userId := userIdFromCtx(ctx)
-	projectId := projectIdFromCtx(ctx)
-
-	return listHandler(ctx, logger, s.redisClient, userId, projectId, request)
+	return listHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }
 
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
@@ -52,10 +78,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 		Str("branchName", request.BranchName).
 		Logger()
 
-	userId := userIdFromCtx(ctx)
-	projectId := projectIdFromCtx(ctx)
-
-	return claimHandler(ctx, logger, s.redisClient, userId, projectId, request)
+	return claimHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }
 
 func (s *ColabShieldServer) Update(ctx context.Context, request *pb.UpdateFilesRequest) (*pb.UpdateFilesResponse, error) {
@@ -64,10 +87,7 @@ func (s *ColabShieldServer) Update(ctx context.Context, request *pb.UpdateFilesR
 		Str("branchName", request.BranchName).
 		Logger()
 
-	userId := userIdFromCtx(ctx)
-	projectId := projectIdFromCtx(ctx)
-
-	return updateHandler(ctx, logger, s.redisClient, userId, projectId, request)
+	return updateHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }
 
 func (s *ColabShieldServer) Release(ctx context.Context, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
@@ -75,8 +95,5 @@ func (s *ColabShieldServer) Release(ctx context.Context, request *pb.ReleaseFile
 		With().
 		Logger()
 
-	userId := userIdFromCtx(ctx)
-	projectId := projectIdFromCtx(ctx)
-
-	return releaseHandler(ctx, logger, s.redisClient, userId, projectId, request)
+	return releaseHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }

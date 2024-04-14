@@ -1,4 +1,4 @@
-package server
+package grpcserver
 
 import (
 	"context"
@@ -10,29 +10,26 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
-	if len(request.FileIds) == 0 {
-		logger.Warn().Msg("No files to release")
+func claimHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
+	if len(request.Files) == 0 {
+		logger.Warn().Msg("No files to claim")
 		// TODO: Consider returning an error here
-		return &pb.ReleaseFilesResponse{
+		return &pb.ClaimFilesResponse{
 			Status: pb.Status_OK,
 		}, nil
 	}
 
-	logger.Info().Msgf("Releasing... %d files", len(request.FileIds))
+	logger.Info().Msgf("Claiming... %d files", len(request.Files))
 
-	files := make([]*models.FileInfo, 0, len(request.FileIds))
+	files := make([]*models.FileInfo, 0, len(request.Files))
 	rejectedFiles := make([]*models.FileInfo, 0)
 
-	keys := make([]string, 0, len(request.FileIds))
-	for _, fileId := range request.FileIds {
-		keys = append(keys, buildRedisKeyForFile(projectId, fileId))
-	}
+	keys := make([]string, 0, len(request.Files))
+	keysFromFileRequests(projectId, request.Files, &keys)
 
 	// Handler for missing files in the Redis hash
 	missingFileHandler := func(idx int) *models.FileInfo {
-		rejectedFiles = append(rejectedFiles, models.NewMissingFileInfo(request.FileIds[idx]))
-		return nil
+		return models.NewFileInfo(request.Files[idx].FileId, request.Files[idx].FileHash, request.BranchName)
 	}
 
 	// Handler for failed unmarshalling of JSON from the Redis hash
@@ -56,11 +53,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 			return err
 		}
 
-		if len(rejectedFiles) > 0 {
-			return ErrRejectedFiles
-		}
-
-		releaseFiles(userId, files, &rejectedFiles)
+		claimFiles(userId, files, request.Files, &rejectedFiles)
 
 		if len(rejectedFiles) > 0 {
 			return ErrRejectedFiles
@@ -73,34 +66,33 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 	err := redisClient.Watch(ctx, watchFn, keys...)
 
 	if errors.Is(err, ErrRejectedFiles) {
-		logger.Info().Msg("Releasing failed due to rejected files")
+		logger.Info().Msg("Claiming failed due to rejected files")
 		protoRejectedFiles := make([]*pb.FileInfo, 0, len(rejectedFiles))
 		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
-		return &pb.ReleaseFilesResponse{
+		return &pb.ClaimFilesResponse{
 			Status:        pb.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
 	} else if err != nil {
-		logger.Error().Err(err).Msg("Failed to release files")
+		logger.Error().Err(err).Msg("Failed to claim files")
 		return nil, err
 	}
 
-	logger.Info().Msg("Releasing successful")
+	logger.Info().Msg("Claiming successful")
 
-	return &pb.ReleaseFilesResponse{
+	// TODO: Consider returning the files that were claimed succesfully
+	return &pb.ClaimFilesResponse{
 		Status: pb.Status_OK,
 	}, nil
 }
 
-func releaseFiles(userId string, fileInfos []*models.FileInfo, outRejectedFiles *[]*models.FileInfo) {
-	// update the files with the new file hashes
+func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*pb.ClaimFileInfo, outRejectedFiles *[]*models.FileInfo) {
 	for i := range fileInfos {
-		if fileInfos[i] == nil {
-			continue
-		}
+		reqFile := claimRequests[i]
 
-		if err := fileInfos[i].Release(userId); err != nil {
+		// try claiming the file
+		if err := fileInfos[i].Claim(userId, reqFile.FileHash, reqFile.ClaimMode); err != nil {
 			// we do not return the error imediately so we can build a full list of rejected files
 			// and report them back all at once
 			*outRejectedFiles = append(*outRejectedFiles, fileInfos[i])
