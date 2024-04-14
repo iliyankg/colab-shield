@@ -23,18 +23,18 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 	keys, cursor, err := redisClient.Scan(ctx, request.Cursor, match, request.PageSize).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to scan keys")
-		return nil, err // TODO: Better and/or more uniform error handling.
+		return nil, ErrRedisError
 	}
 
 	if len(keys) == 0 {
-		logger.Warn().Msg("No files found")
+		logger.Warn().Msgf("No files found for match: %s", match)
 		return &pb.ListFilesResponse{}, nil
 	}
 
 	result, err := redisClient.JSONMGet(ctx, ".", keys...).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to get files from Redis")
-		return nil, err // TODO: Better and/or more uniform error handling.
+		return nil, ErrRedisError
 	}
 
 	// Handler for missing files in the Redis hash
@@ -52,7 +52,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 	err = parseFileInfos(result, &files, missingFileHandler, unmarshalFailHandler)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
-		return nil, err // TODO: Better and/or more uniform error handling.
+		return nil, err
 	}
 
 	protoFiles := make([]*pb.FileInfo, 0, len(files))

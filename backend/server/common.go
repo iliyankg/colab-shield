@@ -19,6 +19,7 @@ var (
 	// Common status error for rejected files regardless of internal reason.
 	ErrRejectedFiles = status.Error(codes.FailedPrecondition, "rejected files")
 	ErrUnmarshalFail = status.Error(codes.Internal, "failed to unmarshal JSON from Redis hash")
+	ErrRedisError    = status.Error(codes.Internal, "encountered an error with Redis")
 )
 
 // parseFileInfos parses the file infos from the Redis hash and creates new ones where appropriate.
