@@ -36,8 +36,14 @@ func (s *ColabShieldServer) ListProjects(ctx context.Context, _ *emptypb.Empty) 
 }
 
 func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
-	log.Error().Msg("ListFiles not implemented")
-	return nil, nil
+	logger := zerolog.Ctx(ctx).
+		With().
+		Logger()
+
+	userId := userIdFromCtx(ctx)
+	projectId := projectIdFromCtx(ctx)
+
+	return listHandler(ctx, logger, s.redisClient, userId, projectId, request)
 }
 
 func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
@@ -73,15 +79,4 @@ func (s *ColabShieldServer) Release(ctx context.Context, request *pb.ReleaseFile
 	projectId := projectIdFromCtx(ctx)
 
 	return releaseHandler(ctx, logger, s.redisClient, userId, projectId, request)
-}
-
-func (s *ColabShieldServer) List(ctx context.Context, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
-	logger := zerolog.Ctx(ctx).
-		With().
-		Logger()
-
-	userId := userIdFromCtx(ctx)
-	projectId := projectIdFromCtx(ctx)
-
-	return listHandler(ctx, logger, s.redisClient, userId, projectId, request)
 }
