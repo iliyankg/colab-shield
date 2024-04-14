@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
+func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, _ string, projectId string, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
 	if request.PageSize == 0 {
 		logger.Warn().Msg("No page size specified")
 		return &pb.ListFilesResponse{}, nil
@@ -24,6 +24,11 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to scan keys")
 		return nil, err // TODO: Better and/or more uniform error handling.
+	}
+
+	if len(keys) == 0 {
+		logger.Warn().Msg("No files found")
+		return &pb.ListFilesResponse{}, nil
 	}
 
 	result, err := redisClient.JSONMGet(ctx, ".", keys...).Result()
