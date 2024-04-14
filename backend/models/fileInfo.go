@@ -15,6 +15,8 @@ var (
 )
 
 // FileInfo represents a file in the system
+//
+// TODO: Look into: https://pkg.go.dev/github.com/redis/rueidis/om#section-readme
 type FileInfo struct {
 	FileId       string          `json:"fileId"`
 	FileHash     string          `json:"fileHash"`
