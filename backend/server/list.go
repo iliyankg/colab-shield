@@ -20,7 +20,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 
 	match := buildScanQuery(projectId, request.FolderPath)
 
-	keys, cursor, err := redisClient.Scan(ctx, request.PageToken, match, request.PageSize).Result()
+	keys, cursor, err := redisClient.Scan(ctx, request.Cursor, match, request.PageSize).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to scan keys")
 		return nil, err // TODO: Better and/or more uniform error handling.
@@ -58,8 +58,8 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 	protoFiles := make([]*pb.FileInfo, 0, len(files))
 	models.FileInfosToProto(files, &protoFiles)
 	return &pb.ListFilesResponse{
-		Files:         protoFiles,
-		NextPageToken: cursor,
+		NextCursor: cursor,
+		Files:      protoFiles,
 	}, nil
 }
 
