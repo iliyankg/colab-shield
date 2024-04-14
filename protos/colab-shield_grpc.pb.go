@@ -23,10 +23,11 @@ const (
 	ColabShield_HealthCheck_FullMethodName  = "/colabshield.ColabShield/HealthCheck"
 	ColabShield_InitProject_FullMethodName  = "/colabshield.ColabShield/InitProject"
 	ColabShield_ListProjects_FullMethodName = "/colabshield.ColabShield/ListProjects"
-	ColabShield_ListFiles_FullMethodName    = "/colabshield.ColabShield/ListFiles"
 	ColabShield_Claim_FullMethodName        = "/colabshield.ColabShield/Claim"
 	ColabShield_Update_FullMethodName       = "/colabshield.ColabShield/Update"
 	ColabShield_Release_FullMethodName      = "/colabshield.ColabShield/Release"
+	ColabShield_ListFiles_FullMethodName    = "/colabshield.ColabShield/ListFiles"
+	ColabShield_GetFiles_FullMethodName     = "/colabshield.ColabShield/GetFiles"
 )
 
 // ColabShieldClient is the client API for ColabShield service.
@@ -36,10 +37,11 @@ type ColabShieldClient interface {
 	HealthCheck(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 	InitProject(ctx context.Context, in *InitProjectRequest, opts ...grpc.CallOption) (*InitProjectResponse, error)
 	ListProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListProjectsResponse, error)
-	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
 	Claim(ctx context.Context, in *ClaimFilesRequest, opts ...grpc.CallOption) (*ClaimFilesResponse, error)
 	Update(ctx context.Context, in *UpdateFilesRequest, opts ...grpc.CallOption) (*UpdateFilesResponse, error)
 	Release(ctx context.Context, in *ReleaseFilesRequest, opts ...grpc.CallOption) (*ReleaseFilesResponse, error)
+	ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error)
+	GetFiles(ctx context.Context, in *GetFilesRequest, opts ...grpc.CallOption) (*GetFilesResponse, error)
 }
 
 type colabShieldClient struct {
@@ -77,15 +79,6 @@ func (c *colabShieldClient) ListProjects(ctx context.Context, in *emptypb.Empty,
 	return out, nil
 }
 
-func (c *colabShieldClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
-	out := new(ListFilesResponse)
-	err := c.cc.Invoke(ctx, ColabShield_ListFiles_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *colabShieldClient) Claim(ctx context.Context, in *ClaimFilesRequest, opts ...grpc.CallOption) (*ClaimFilesResponse, error) {
 	out := new(ClaimFilesResponse)
 	err := c.cc.Invoke(ctx, ColabShield_Claim_FullMethodName, in, out, opts...)
@@ -113,6 +106,24 @@ func (c *colabShieldClient) Release(ctx context.Context, in *ReleaseFilesRequest
 	return out, nil
 }
 
+func (c *colabShieldClient) ListFiles(ctx context.Context, in *ListFilesRequest, opts ...grpc.CallOption) (*ListFilesResponse, error) {
+	out := new(ListFilesResponse)
+	err := c.cc.Invoke(ctx, ColabShield_ListFiles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *colabShieldClient) GetFiles(ctx context.Context, in *GetFilesRequest, opts ...grpc.CallOption) (*GetFilesResponse, error) {
+	out := new(GetFilesResponse)
+	err := c.cc.Invoke(ctx, ColabShield_GetFiles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ColabShieldServer is the server API for ColabShield service.
 // All implementations must embed UnimplementedColabShieldServer
 // for forward compatibility
@@ -120,10 +131,11 @@ type ColabShieldServer interface {
 	HealthCheck(context.Context, *emptypb.Empty) (*HealthCheckResponse, error)
 	InitProject(context.Context, *InitProjectRequest) (*InitProjectResponse, error)
 	ListProjects(context.Context, *emptypb.Empty) (*ListProjectsResponse, error)
-	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
 	Claim(context.Context, *ClaimFilesRequest) (*ClaimFilesResponse, error)
 	Update(context.Context, *UpdateFilesRequest) (*UpdateFilesResponse, error)
 	Release(context.Context, *ReleaseFilesRequest) (*ReleaseFilesResponse, error)
+	ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error)
+	GetFiles(context.Context, *GetFilesRequest) (*GetFilesResponse, error)
 	mustEmbedUnimplementedColabShieldServer()
 }
 
@@ -140,9 +152,6 @@ func (UnimplementedColabShieldServer) InitProject(context.Context, *InitProjectR
 func (UnimplementedColabShieldServer) ListProjects(context.Context, *emptypb.Empty) (*ListProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
 }
-func (UnimplementedColabShieldServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
-}
 func (UnimplementedColabShieldServer) Claim(context.Context, *ClaimFilesRequest) (*ClaimFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Claim not implemented")
 }
@@ -151,6 +160,12 @@ func (UnimplementedColabShieldServer) Update(context.Context, *UpdateFilesReques
 }
 func (UnimplementedColabShieldServer) Release(context.Context, *ReleaseFilesRequest) (*ReleaseFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Release not implemented")
+}
+func (UnimplementedColabShieldServer) ListFiles(context.Context, *ListFilesRequest) (*ListFilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFiles not implemented")
+}
+func (UnimplementedColabShieldServer) GetFiles(context.Context, *GetFilesRequest) (*GetFilesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFiles not implemented")
 }
 func (UnimplementedColabShieldServer) mustEmbedUnimplementedColabShieldServer() {}
 
@@ -219,24 +234,6 @@ func _ColabShield_ListProjects_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ColabShield_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListFilesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ColabShieldServer).ListFiles(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ColabShield_ListFiles_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ColabShieldServer).ListFiles(ctx, req.(*ListFilesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ColabShield_Claim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClaimFilesRequest)
 	if err := dec(in); err != nil {
@@ -291,6 +288,42 @@ func _ColabShield_Release_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ColabShield_ListFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ColabShieldServer).ListFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ColabShield_ListFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ColabShieldServer).ListFiles(ctx, req.(*ListFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ColabShield_GetFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ColabShieldServer).GetFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ColabShield_GetFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ColabShieldServer).GetFiles(ctx, req.(*GetFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ColabShield_ServiceDesc is the grpc.ServiceDesc for ColabShield service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -311,10 +344,6 @@ var ColabShield_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ColabShield_ListProjects_Handler,
 		},
 		{
-			MethodName: "ListFiles",
-			Handler:    _ColabShield_ListFiles_Handler,
-		},
-		{
 			MethodName: "Claim",
 			Handler:    _ColabShield_Claim_Handler,
 		},
@@ -325,6 +354,14 @@ var ColabShield_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Release",
 			Handler:    _ColabShield_Release_Handler,
+		},
+		{
+			MethodName: "ListFiles",
+			Handler:    _ColabShield_ListFiles_Handler,
+		},
+		{
+			MethodName: "GetFiles",
+			Handler:    _ColabShield_GetFiles_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

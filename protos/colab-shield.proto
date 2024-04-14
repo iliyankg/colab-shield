@@ -31,11 +31,13 @@ service ColabShield {
     rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse) {}
     rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
     rpc ListProjects(google.protobuf.Empty) returns (ListProjectsResponse) {}
-    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
+    
 
     rpc Claim(ClaimFilesRequest) returns (ClaimFilesResponse) {}
     rpc Update(UpdateFilesRequest) returns (UpdateFilesResponse) {}
     rpc Release(ReleaseFilesRequest) returns (ReleaseFilesResponse) {}
+    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
+    rpc GetFiles(GetFilesRequest) returns (GetFilesResponse) {}
 }
 
 // ----------------------------------------
@@ -134,4 +136,15 @@ message ReleaseFilesRequest {
 message ReleaseFilesResponse {
     Status status = 1;
     repeated FileInfo rejectedFiles = 2;
+}
+
+// ----------------------------------------
+// Get Files Messages
+// ----------------------------------------
+message GetFilesRequest {
+    repeated string fileIds = 2;
+}
+
+message GetFilesResponse {
+    repeated FileInfo files = 1;
 }

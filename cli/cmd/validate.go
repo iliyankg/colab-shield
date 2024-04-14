@@ -14,7 +14,7 @@ var validateCmd = &cobra.Command{
 	Short: "Validates if the files listed can be moodified by this user in this branch.",
 	Long:  `Validates if the files listed can be moodified by this user in this branch.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info().Msg("Validate called")
+		log.Fatal().Msg("not implemented")
 	},
 }
 
