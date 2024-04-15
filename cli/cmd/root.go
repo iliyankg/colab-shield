@@ -36,7 +36,6 @@ func init() {
 	rootCmd.AddCommand(initProjectCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(claimFilesCmd)
-	rootCmd.AddCommand(validateCmd)
 }
 
 // Execute executes the root command.

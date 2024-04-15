@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	pb "github.com/iliyankg/colab-shield/protos"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -21,4 +22,25 @@ func buildContext(projectId string, userId string) (context.Context, context.Can
 	)
 
 	return metadata.NewOutgoingContext(ctx, metaInfo), cancel
+}
+
+func newClaimFilesRequest(files []string, hashes []string, claimMode pb.ClaimMode, softClaim bool) (*pb.ClaimFilesRequest, error) {
+	if len(files) != len(hashes) {
+		return nil, ErrFileToHashMissmatch
+	}
+
+	claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
+	for i, file := range files {
+		claimFileInfos = append(claimFileInfos, &pb.ClaimFileInfo{
+			FileId:    file,
+			FileHash:  hashes[i],
+			ClaimMode: claimMode,
+		})
+	}
+
+	return &pb.ClaimFilesRequest{
+		BranchName: gitBranch,
+		Files:      claimFileInfos,
+		SoftClaim:  softClaim,
+	}, nil
 }

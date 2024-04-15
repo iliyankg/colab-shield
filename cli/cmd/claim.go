@@ -10,11 +10,14 @@ import (
 
 var (
 	filesToClaim []string
+	softClaim    bool
 )
 
 func init() {
 	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
+
+	claimFilesCmd.Flags().BoolVarP(&softClaim, "soft-claim", "s", false, "Soft claim only exposes any files that may get rejected if any. Nothing is saved to the DB")
 }
 
 var claimFilesCmd = &cobra.Command{
@@ -30,7 +33,7 @@ var claimFilesCmd = &cobra.Command{
 		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
 
 		// TODO: Implement proper claim mode functionality
-		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE)
+		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE, softClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
@@ -45,28 +48,12 @@ var claimFilesCmd = &cobra.Command{
 			log.Fatal().Err(err).Msg("failed to lock files")
 		}
 
+		for _, file := range response.RejectedFiles {
+			log.Warn().Msgf("Rejected - %s - %s", file.FileId, file.RejectReason.String())
+		}
+
 		if response.Status != pb.Status_OK {
 			log.Fatal().Msg("status not OK")
 		}
 	},
-}
-
-func newClaimFilesRequest(files []string, hashes []string, claimMode pb.ClaimMode) (*pb.ClaimFilesRequest, error) {
-	if len(files) != len(hashes) {
-		return nil, ErrFileToHashMissmatch
-	}
-
-	claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
-	for i, file := range files {
-		claimFileInfos = append(claimFileInfos, &pb.ClaimFileInfo{
-			FileId:    file,
-			FileHash:  hashes[i],
-			ClaimMode: claimMode,
-		})
-	}
-
-	return &pb.ClaimFilesRequest{
-		BranchName: gitBranch,
-		Files:      claimFileInfos,
-	}, nil
 }
