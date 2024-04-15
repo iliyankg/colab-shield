@@ -97,7 +97,8 @@ message ClaimFileInfo {
 
 message ClaimFilesRequest {
     string branchName = 1;
-    repeated ClaimFileInfo files = 4;
+    repeated ClaimFileInfo files = 2;
+    bool softClaim = 3;
 }
 
 message ClaimFilesResponse {
