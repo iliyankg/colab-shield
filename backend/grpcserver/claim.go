@@ -59,6 +59,11 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis
 			return ErrRejectedFiles
 		}
 
+		if request.SoftClaim {
+			logger.Info().Msg("Only a soft claim, nothing saved...")
+			return nil
+		}
+
 		return setFiles(ctx, logger, redisClient, keys, files)
 	}
 
