@@ -12,11 +12,13 @@ var (
 	ErrFileOutOfDate      = errors.New("file out of date")
 	ErrUserNotOwner       = errors.New("user not owner")
 	ErrInvalidClaimMode   = errors.New("invalid claim mode")
+	ErrorFileNotMissing   = errors.New("file not missing")
 )
 
 // FileInfo represents a file in the system
 //
 // TODO: Look into: https://pkg.go.dev/github.com/redis/rueidis/om#section-readme
+// TODO: Look into: https://stackoverflow.com/questions/11126793/json-and-dealing-with-unexported-fields
 type FileInfo struct {
 	FileId       string          `json:"fileId"`
 	FileHash     string          `json:"fileHash"`
@@ -63,6 +65,20 @@ func NewMissingFileInfo(fileId string) *FileInfo {
 		ClaimMode:    pb.ClaimMode_UNCLAIMED,
 		RejectReason: pb.RejectReason_MISSING,
 	}
+}
+
+// UpgradeMissingToNew upgrades a missing file to a new file setting up the object invariants.
+// Can error if the file is not missing.
+func (fi *FileInfo) UpgradeMissingToNew(fileHash string, branchName string) error {
+	if fi.RejectReason != pb.RejectReason_MISSING {
+		return ErrorFileNotMissing
+	}
+
+	fi.FileHash = fileHash
+	fi.BranchName = branchName
+	fi.RejectReason = pb.RejectReason_NONE
+
+	return nil
 }
 
 // Claim claims a file for a user
