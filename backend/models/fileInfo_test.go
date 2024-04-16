@@ -230,3 +230,132 @@ func TestFileInfo_CheckOwner(t *testing.T) {
 		}
 	})
 }
+
+func TestFileInfo_addOwner(t *testing.T) {
+	t.Run("Add Owner", func(t *testing.T) {
+		// Setup
+		fi := NewFileInfo("fileId", "fileHash", "branchName")
+
+		// Action
+		fi.addOwner("userId")
+
+		// Assert
+		if len(fi.UserIds) != 1 {
+			t.Errorf("Expected user IDs to have length 1, got %v", fi.UserIds)
+		}
+		if fi.UserIds[0] != "userId" {
+			t.Errorf("Expected user ID to be 'userId', got %s", fi.UserIds[0])
+		}
+	})
+
+	t.Run("Add Owner Twice", func(t *testing.T) {
+		// Setup
+		fi := NewFileInfo("fileId", "fileHash", "branchName")
+
+		// Action
+		fi.addOwner("userId")
+		fi.addOwner("userId")
+
+		// Assert
+		if len(fi.UserIds) != 1 {
+			t.Errorf("Expected user IDs to have length 1, got %v", fi.UserIds)
+		}
+	})
+}
+
+func TestFileInfo_removeOwner(t *testing.T) {
+	t.Run("Remove Owner", func(t *testing.T) {
+		// Setup
+		fi := NewFileInfo("fileId", "fileHash", "branchName")
+		fi.UserIds = []string{"userId"}
+
+		// Action
+		if err := fi.removeOwner("userId"); err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		// Assert
+		if len(fi.UserIds) != 0 {
+			t.Errorf("Expected user IDs to be empty, got %v", fi.UserIds)
+		}
+	})
+
+	t.Run("Remove Not Owner", func(t *testing.T) {
+		// Setup
+		fi := NewFileInfo("fileId", "fileHash", "branchName")
+
+		// Action
+		if err := fi.removeOwner("userId"); err != ErrUserNotOwner {
+			t.Errorf("Expected error to be ErrUserNotOwner, got %v", err)
+		}
+	})
+}
+
+func TestFileInfo_NewMissingFileInfo(t *testing.T) {
+	// Setup
+	fi := NewMissingFileInfo("fileId")
+
+	// Assert
+	if fi.FileId != "fileId" {
+		t.Errorf("Expected file ID to be 'fileId', got %s", fi.FileId)
+	}
+	if fi.FileHash != "" {
+		t.Errorf("Expected file hash to be empty, got %s", fi.FileHash)
+	}
+	if len(fi.UserIds) != 0 {
+		t.Errorf("Expected user IDs to be empty, got %v", fi.UserIds)
+	}
+	if fi.BranchName != "" {
+		t.Errorf("Expected branch name to be empty, got %s", fi.BranchName)
+	}
+	if fi.ClaimMode != pb.ClaimMode_UNCLAIMED {
+		t.Errorf("Expected claim mode to be 0, got %d", fi.ClaimMode)
+	}
+	if fi.RejectReason != pb.RejectReason_MISSING {
+		t.Errorf("Expected reject reason to be 5, got %d", fi.RejectReason)
+	}
+}
+
+func TestFileInfo_UpgradeMissingToNew(t *testing.T) {
+	t.Run("Upgrade Missing to New", func(t *testing.T) {
+		// Setup
+		fi := NewMissingFileInfo("fileId")
+
+		// Action
+		err := fi.UpgradeMissingToNew("fileHash", "branchName")
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		if fi.FileHash != "fileHash" {
+			t.Errorf("Expected file hash to be 'fileHash', got %s", fi.FileHash)
+		}
+
+		if fi.BranchName != "branchName" {
+			t.Errorf("Expected branch name to be 'branchName', got %s", fi.BranchName)
+		}
+
+		if len(fi.UserIds) != 0 {
+			t.Errorf("Expected user IDs to be empty, got %v", fi.UserIds)
+		}
+
+		if fi.ClaimMode != pb.ClaimMode_UNCLAIMED {
+			t.Errorf("Expected claim mode to be 0, got %d", fi.ClaimMode)
+		}
+
+		if fi.RejectReason != pb.RejectReason_NONE {
+			t.Errorf("Expected reject reason to be 0, got %d", fi.RejectReason)
+		}
+	})
+
+	t.Run("Upgrade New to New", func(t *testing.T) {
+		// Setup
+		fi := NewFileInfo("fileId", "fileHash", "branchName")
+
+		// Action
+		err := fi.UpgradeMissingToNew("fileHash", "branchName")
+		if err != ErrorFileNotMissing {
+			t.Errorf("Expected error to be ErrorFileNotMissing, got %v", err)
+		}
+	})
+}
