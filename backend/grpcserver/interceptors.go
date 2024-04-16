@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -16,6 +17,7 @@ type colabShieldContextKey string
 const (
 	UserIdKey    colabShieldContextKey = "userId"
 	ProjectIdKey colabShieldContextKey = "projectId"
+	RequestUUID  colabShieldContextKey = "requestUUID"
 )
 
 var (
@@ -57,12 +59,14 @@ func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 }
 
 func buildCollabShieldContext(ctx context.Context, userId string, projectId string, method string) context.Context {
-	// TODO: Add request guid to Ctx and the logger. Consider taking it from the metadata so it comes in from the client for end-to-end tracing.
+	reqUUID := uuid.New().String()
 	ctx = context.WithValue(ctx, UserIdKey, userId)
 	ctx = context.WithValue(ctx, ProjectIdKey, projectId)
+	ctx = context.WithValue(ctx, RequestUUID, reqUUID)
 
 	logger := zerolog.New(os.Stdout).With().
 		Timestamp().
+		Str("uuid", reqUUID).
 		Str("userId", userId).
 		Str("projectId", projectId).
 		Str("method", method).

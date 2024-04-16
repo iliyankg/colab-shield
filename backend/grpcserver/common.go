@@ -56,7 +56,7 @@ func parseFileInfos(logger zerolog.Logger, keys []string, toParse []any, missing
 		// unmarshal the JSON from the Redis hash
 		fileInfo := models.NewBlankFileInfo()
 		if err := json.Unmarshal([]byte(res.(string)), fileInfo); err != nil {
-			logger.Error().Str("key", keys[i]).Err(err).Msg("Failed to unmarshal JSON from Redis hash")
+			logger.Error().Str("key", keys[i]).Err(err).Msg("Failed to unmarshal JSON from Redis")
 			return ErrUnmarshalFail
 		}
 
