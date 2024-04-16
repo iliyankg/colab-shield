@@ -13,7 +13,6 @@ import (
 )
 
 type MissingFileHandler func(idx int) *models.FileInfo
-type UnmarshalFailHandler func(idx int, err error) error
 
 var (
 	// Common status error for rejected files regardless of internal reason.
@@ -24,14 +23,14 @@ var (
 
 // getFileInfos reads the file infos from the Redis hash and populates the outFiles slice.
 // Using redis.Cmdable to allow for both a client and a transaction to be passed in.
-func getFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, missingFileHandler MissingFileHandler, unmarshalFailHandler UnmarshalFailHandler, outFiles *[]*models.FileInfo) error {
+func getFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, missingFileHandler MissingFileHandler, outFiles *[]*models.FileInfo) error {
 	result, err := rc.JSONMGet(ctx, ".", keys...).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to read keys from Redis hash")
 		return err
 	}
 
-	err = parseFileInfos(result, outFiles, missingFileHandler, unmarshalFailHandler)
+	err = parseFileInfos(logger, keys, result, missingFileHandler, outFiles)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
 		return err
@@ -41,7 +40,7 @@ func getFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, 
 }
 
 // parseFileInfos parses the file infos from the Redis hash and creates new ones where appropriate.
-func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFileHandler MissingFileHandler, unmarshalFailHandler UnmarshalFailHandler) error {
+func parseFileInfos(logger zerolog.Logger, keys []string, toParse []any, missingFileHandler MissingFileHandler, outFileInfos *[]*models.FileInfo) error {
 	// parse all files from the Redis and create new where appropriate
 	for i, res := range toParse {
 		// key does not exist in the DB so assume brand new
@@ -57,14 +56,8 @@ func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFile
 		// unmarshal the JSON from the Redis hash
 		fileInfo := models.NewBlankFileInfo()
 		if err := json.Unmarshal([]byte(res.(string)), fileInfo); err != nil {
-			if unmarshalFailHandler == nil {
-				continue
-			}
-
-			err = unmarshalFailHandler(i, err)
-			if err != nil {
-				return err
-			}
+			logger.Error().Str("key", keys[i]).Err(err).Msg("Failed to unmarshal JSON from Redis hash")
+			return ErrUnmarshalFail
 		}
 
 		*outFileInfos = append(*outFileInfos, fileInfo)
@@ -73,7 +66,9 @@ func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFile
 	return nil
 }
 
-func setFiles(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, keys []string, fileInfos []*models.FileInfo) error {
+// setFileInfos writes the file infos to the Redis JSON.
+// Only redis client is used because JSON MSet uses  MULTI/EXEC internally already and redis does not support nested transactions.
+func setFileInfos(ctx context.Context, logger zerolog.Logger, rc *redis.Client, keys []string, fileInfos []*models.FileInfo) error {
 	// build the mset params
 	mSetParams := make([]any, 0, len(fileInfos)*3)
 	for i, file := range fileInfos {
@@ -83,7 +78,7 @@ func setFiles(ctx context.Context, logger zerolog.Logger, redisClient *redis.Cli
 	logger.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
 	// Not pipelined because it uses MULTI/EXEC internally already and redis does not support
 	// nested transactions.
-	if err := redisClient.JSONMSet(ctx, mSetParams...).Err(); err != nil {
+	if err := rc.JSONMSet(ctx, mSetParams...).Err(); err != nil {
 		logger.Error().Err(err).Msg("Failed to write to Redis hash")
 		return err
 	}

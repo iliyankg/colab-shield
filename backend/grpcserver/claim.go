@@ -32,16 +32,10 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 		return models.NewFileInfo(request.Files[idx].FileId, request.Files[idx].FileHash, request.BranchName)
 	}
 
-	// Handler for failed unmarshalling of JSON from the Redis hash
-	unmarshalFailHandler := func(idx int, err error) error {
-		logger.Error().Str("key", keys[idx]).Err(err).Msg("Failed to unmarshal JSON from Redis hash")
-		return ErrUnmarshalFail
-	}
-
 	// Watch function to ensure keys do not get modified by another request while this transaction
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
-		if err := getFileInfos(ctx, logger, tx, keys, missingFileHandler, unmarshalFailHandler, &files); err != nil {
+		if err := getFileInfos(ctx, logger, tx, keys, missingFileHandler, &files); err != nil {
 			return err
 		}
 
@@ -56,7 +50,7 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 			return nil
 		}
 
-		return setFiles(ctx, logger, rc, keys, files)
+		return setFileInfos(ctx, logger, rc, keys, files)
 	}
 
 	// Execute the watch function

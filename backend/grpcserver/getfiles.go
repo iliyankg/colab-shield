@@ -28,14 +28,8 @@ func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Clien
 		return models.NewMissingFileInfo(request.FileIds[idx])
 	}
 
-	// Handler for failed unmarshalling of JSON from the Redis hash
-	unmarshalFailHandler := func(idx int, err error) error {
-		logger.Error().Str("key", keys[idx]).Err(err).Msg("Failed to unmarshal JSON from Redis hash")
-		return ErrUnmarshalFail
-	}
-
 	files := make([]*models.FileInfo, 0, len(request.FileIds))
-	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, unmarshalFailHandler, &files); err != nil {
+	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
 		return nil, err
 	}
 
