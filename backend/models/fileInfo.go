@@ -26,7 +26,7 @@ type FileInfo struct {
 	RejectReason pb.RejectReason `json:"-"` // RejectReason is not stored in db
 }
 
-// NewFileInfo creates a new blank FileInfo with just a File ID
+// NewFileInfo creates a new FileInfo that meets the invariants of the struct
 func NewFileInfo(fileId string, fileHash string, branchName string) *FileInfo {
 	return &FileInfo{
 		FileId:       fileId,
@@ -53,7 +53,7 @@ func NewBlankFileInfo() *FileInfo {
 	}
 }
 
-// NewMissingFileInfo creates a new FileInfo that is missing
+// NewMissingFileInfo creates a new FileInfo for a file that is missing.
 func NewMissingFileInfo(fileId string) *FileInfo {
 	return &FileInfo{
 		FileId:       fileId,
