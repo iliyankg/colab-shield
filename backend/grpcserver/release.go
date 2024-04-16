@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
+func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
 	if len(request.FileIds) == 0 {
 		logger.Warn().Msg("No files to release")
 		// TODO: Consider returning an error here
@@ -44,15 +44,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 	// Watch function to ensure keys do not get modified by another request while this transaction
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
-		result, err := tx.JSONMGet(ctx, ".", keys...).Result()
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to read keys from Redis hash")
-			return err
-		}
-
-		err = parseFileInfos(result, &files, missingFileHandler, unmarshalFailHandler)
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
+		if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, unmarshalFailHandler, &files); err != nil {
 			return err
 		}
 
@@ -66,11 +58,11 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, redisClient *red
 			return ErrRejectedFiles
 		}
 
-		return setFiles(ctx, logger, redisClient, keys, files)
+		return setFiles(ctx, logger, rc, keys, files)
 	}
 
 	// Execute the watch function
-	err := redisClient.Watch(ctx, watchFn, keys...)
+	err := rc.Watch(ctx, watchFn, keys...)
 
 	if errors.Is(err, ErrRejectedFiles) {
 		logger.Info().Msg("Releasing failed due to rejected files")

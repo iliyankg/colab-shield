@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func getFilesHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, userId string, projectId string, request *pb.GetFilesRequest) (*pb.GetFilesResponse, error) {
+func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *pb.GetFilesRequest) (*pb.GetFilesResponse, error) {
 	if len(request.FileIds) == 0 {
 		logger.Warn().Msg("No files to update")
 		// TODO: Consider returning an error here
@@ -34,16 +34,8 @@ func getFilesHandler(ctx context.Context, logger zerolog.Logger, redisClient *re
 		return ErrUnmarshalFail
 	}
 
-	result, err := redisClient.JSONMGet(ctx, ".", keys...).Result()
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to read keys from Redis hash")
-		return nil, err
-	}
-
 	files := make([]*models.FileInfo, 0, len(request.FileIds))
-	err = parseFileInfos(result, &files, missingFileHandler, unmarshalFailHandler)
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
+	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, unmarshalFailHandler, &files); err != nil {
 		return nil, err
 	}
 

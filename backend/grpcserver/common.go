@@ -22,6 +22,24 @@ var (
 	ErrRedisError    = status.Error(codes.Internal, "encountered an error with Redis")
 )
 
+// getFileInfos reads the file infos from the Redis hash and populates the outFiles slice.
+// Using redis.Cmdable to allow for both a client and a transaction to be passed in.
+func getFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, missingFileHandler MissingFileHandler, unmarshalFailHandler UnmarshalFailHandler, outFiles *[]*models.FileInfo) error {
+	result, err := rc.JSONMGet(ctx, ".", keys...).Result()
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to read keys from Redis hash")
+		return err
+	}
+
+	err = parseFileInfos(result, outFiles, missingFileHandler, unmarshalFailHandler)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
+		return err
+	}
+
+	return nil
+}
+
 // parseFileInfos parses the file infos from the Redis hash and creates new ones where appropriate.
 func parseFileInfos(toParse []any, outFileInfos *[]*models.FileInfo, missingFileHandler MissingFileHandler, unmarshalFailHandler UnmarshalFailHandler) error {
 	// parse all files from the Redis and create new where appropriate

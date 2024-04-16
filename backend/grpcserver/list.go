@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.Client, _ string, projectId string, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
+func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
 	if request.PageSize == 0 {
 		logger.Warn().Msg("No page size specified")
 		return &pb.ListFilesResponse{}, nil
@@ -20,7 +20,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 
 	match := buildScanQuery(projectId, request.FolderPath)
 
-	keys, cursor, err := redisClient.Scan(ctx, request.Cursor, match, request.PageSize).Result()
+	keys, cursor, err := rc.Scan(ctx, request.Cursor, match, request.PageSize).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to scan keys")
 		return nil, ErrRedisError
@@ -29,12 +29,6 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 	if len(keys) == 0 {
 		logger.Warn().Msgf("No files found for match: %s", match)
 		return &pb.ListFilesResponse{}, nil
-	}
-
-	result, err := redisClient.JSONMGet(ctx, ".", keys...).Result()
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to get files from Redis")
-		return nil, ErrRedisError
 	}
 
 	// Handler for missing files in the Redis hash
@@ -49,9 +43,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, redisClient *redis.
 	}
 
 	files := make([]*models.FileInfo, 0, len(keys))
-	err = parseFileInfos(result, &files, missingFileHandler, unmarshalFailHandler)
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
+	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, unmarshalFailHandler, &files); err != nil {
 		return nil, err
 	}
 
