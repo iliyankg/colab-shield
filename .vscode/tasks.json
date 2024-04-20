@@ -1,5 +1,12 @@
 {
     "version": "2.0.0",
+    "inputs": [
+        {
+            "id": "cliCommandName",
+            "type": "promptString",
+            "description": "Name of the command",
+        }
+    ],
     "tasks": [
         {
             "type": "shell",
@@ -14,6 +21,13 @@
             "command": "./tools/dummy_claim.sh",
             "group": "none",
             "detail": "Sends a dummy claim request to the server"
+        },
+        {
+            "type": "shell",
+            "label": "New CLI command",
+            "command": "${workspaceFolder}/cli/tools/add_command.sh ${workspaceFolder}/cli ${input:cliCommandName}",
+            "group": "none",
+            "detail": "creates a new CLI command"
         }
     ]
 }
