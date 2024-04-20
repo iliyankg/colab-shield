@@ -60,7 +60,7 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client,
 	if errors.Is(err, ErrRejectedFiles) {
 		logger.Info().Msg("Updating failed due to rejected files")
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
-		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
+		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
 		return &protos.UpdateFilesResponse{
 			Status:        protos.Status_REJECTED,

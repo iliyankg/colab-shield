@@ -36,7 +36,7 @@ func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Clien
 
 	logger.Info().Msg("Getting successful")
 	protoFiles := make([]*protos.FileInfo, 0, len(files))
-	models.FileInfosToProto(files, &protoFiles)
+	fileInfosToProto(files, &protoFiles)
 	return &protos.GetFilesResponse{
 		Files: protoFiles,
 	}, nil

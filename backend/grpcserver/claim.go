@@ -60,7 +60,7 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 	if errors.Is(err, ErrRejectedFiles) {
 		logger.Info().Msg("Claiming failed due to rejected files")
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
-		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
+		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
 		return &protos.ClaimFilesResponse{
 			Status:        protos.Status_REJECTED,
@@ -84,7 +84,7 @@ func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*pr
 		reqFile := claimRequests[i]
 
 		// try claiming the file
-		if err := fileInfos[i].Claim(userId, reqFile.FileHash, reqFile.ClaimMode); err != nil {
+		if err := fileInfos[i].Claim(userId, reqFile.FileHash, models.ClaimMode(reqFile.ClaimMode)); err != nil {
 			// we do not return the error imediately so we can build a full list of rejected files
 			// and report them back all at once
 			*outRejectedFiles = append(*outRejectedFiles, fileInfos[i])

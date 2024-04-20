@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/iliyankg/colab-shield/backend/colabom"
+	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/iliyankg/colab-shield/protos"
 )
 
@@ -33,4 +34,23 @@ func userIdFromCtx(ctx context.Context) string {
 // projectId is required and verified to exist in the UnaryInterceptor
 func projectIdFromCtx(ctx context.Context) string {
 	return ctx.Value(ProjectIdKey).(string)
+}
+
+// ToProto converts a FileInfo to a protos.FileInfo
+func toProto(fi *models.FileInfo) *protos.FileInfo {
+	return &protos.FileInfo{
+		FileId:       fi.FileId,
+		FileHash:     fi.FileHash,
+		UserIds:      fi.UserIds,
+		BranchName:   fi.BranchName,
+		ClaimMode:    protos.ClaimMode(fi.ClaimMode),
+		RejectReason: protos.RejectReason(fi.RejectReason),
+	}
+}
+
+// FileInfosToProto converts a slice of FileInfo to a slice of protos.FileInfo
+func fileInfosToProto(fileInfos []*models.FileInfo, outTarget *[]*protos.FileInfo) {
+	for _, fi := range fileInfos {
+		*outTarget = append(*outTarget, toProto(fi))
+	}
 }

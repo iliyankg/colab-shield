@@ -3,8 +3,6 @@ package models
 import (
 	"encoding/json"
 	"errors"
-
-	"github.com/iliyankg/colab-shield/protos"
 )
 
 var (
@@ -15,17 +13,38 @@ var (
 	ErrorFileNotMissing   = errors.New("file not missing")
 )
 
+// Enum for claim mode
+type ClaimMode int32
+
+const (
+	Unclaimed ClaimMode = iota
+	Shared
+	Exclusive
+)
+
+// Enum for reject reason
+type RejectReason int32
+
+const (
+	None RejectReason = iota
+	AlreadyClaimed
+	OutOfDate
+	NotOwner
+	InvalidClaimMode
+	Missing
+)
+
 // FileInfo represents a file in the system
 //
 // TODO: Look into: https://pkg.go.dev/github.com/redis/rueidis/om#section-readme
 // TODO: Look into: https://stackoverflow.com/questions/11126793/json-and-dealing-with-unexported-fields
 type FileInfo struct {
-	FileId       string              `json:"fileId"`
-	FileHash     string              `json:"fileHash"`
-	UserIds      []string            `json:"userIds"`
-	BranchName   string              `json:"branchName"`
-	ClaimMode    protos.ClaimMode    `json:"mode"`
-	RejectReason protos.RejectReason `json:"-"` // RejectReason is not stored in db
+	FileId       string       `json:"fileId"`
+	FileHash     string       `json:"fileHash"`
+	UserIds      []string     `json:"userIds"`
+	BranchName   string       `json:"branchName"`
+	ClaimMode    ClaimMode    `json:"mode"`
+	RejectReason RejectReason `json:"-"` // RejectReason is not stored in db
 }
 
 // NewFileInfo creates a new FileInfo that meets the invariants of the struct
@@ -35,8 +54,8 @@ func NewFileInfo(fileId string, fileHash string, branchName string) *FileInfo {
 		FileHash:     fileHash,
 		UserIds:      []string{},
 		BranchName:   branchName,
-		ClaimMode:    protos.ClaimMode_UNCLAIMED,
-		RejectReason: protos.RejectReason_NONE,
+		ClaimMode:    Unclaimed,
+		RejectReason: None,
 	}
 }
 
@@ -50,8 +69,8 @@ func NewBlankFileInfo() *FileInfo {
 		FileHash:     "",
 		UserIds:      []string{},
 		BranchName:   "",
-		ClaimMode:    protos.ClaimMode_UNCLAIMED,
-		RejectReason: protos.RejectReason_NONE,
+		ClaimMode:    Unclaimed,
+		RejectReason: None,
 	}
 }
 
@@ -62,33 +81,33 @@ func NewMissingFileInfo(fileId string) *FileInfo {
 		FileHash:     "",
 		UserIds:      []string{},
 		BranchName:   "",
-		ClaimMode:    protos.ClaimMode_UNCLAIMED,
-		RejectReason: protos.RejectReason_MISSING,
+		ClaimMode:    Unclaimed,
+		RejectReason: Missing,
 	}
 }
 
 // UpgradeMissingToNew upgrades a missing file to a new file setting up the object invariants.
 // Can error if the file is not missing.
 func (fi *FileInfo) UpgradeMissingToNew(fileHash string, branchName string) error {
-	if fi.RejectReason != protos.RejectReason_MISSING {
+	if fi.RejectReason != Missing {
 		return ErrorFileNotMissing
 	}
 
 	fi.FileHash = fileHash
 	fi.BranchName = branchName
-	fi.RejectReason = protos.RejectReason_NONE
+	fi.RejectReason = None
 
 	return nil
 }
 
 // Claim claims a file for a user
-func (fi *FileInfo) Claim(userId string, fileHash string, claimMode protos.ClaimMode) error {
-	if claimMode == protos.ClaimMode_UNCLAIMED {
+func (fi *FileInfo) Claim(userId string, fileHash string, claimMode ClaimMode) error {
+	if claimMode == Unclaimed {
 		return fi.invalidClaimMode()
 	}
 
 	// Already claimed by someone else.
-	if fi.ClaimMode == protos.ClaimMode_EXCLUSIVE {
+	if fi.ClaimMode == Exclusive {
 		return fi.alreadyClaimed()
 	}
 
@@ -96,7 +115,7 @@ func (fi *FileInfo) Claim(userId string, fileHash string, claimMode protos.Claim
 		return fi.fileOutOfDate()
 	}
 
-	if fi.ClaimMode == protos.ClaimMode_SHARED && claimMode == protos.ClaimMode_EXCLUSIVE {
+	if fi.ClaimMode == Shared && claimMode == Exclusive {
 		return fi.invalidClaimMode()
 	}
 
@@ -128,7 +147,7 @@ func (fi *FileInfo) Release(userId string) error {
 	}
 
 	if len(fi.UserIds) == 0 {
-		fi.ClaimMode = protos.ClaimMode_UNCLAIMED
+		fi.ClaimMode = Unclaimed
 	}
 
 	return nil
@@ -167,22 +186,22 @@ func (fi *FileInfo) removeOwner(userId string) error {
 }
 
 func (fi *FileInfo) invalidClaimMode() error {
-	fi.RejectReason = protos.RejectReason_INVALID_CLAIM_MODE
+	fi.RejectReason = InvalidClaimMode
 	return ErrInvalidClaimMode
 }
 
 func (fi *FileInfo) alreadyClaimed() error {
-	fi.RejectReason = protos.RejectReason_ALREADY_CLAIMED
+	fi.RejectReason = AlreadyClaimed
 	return ErrFileAlreadyClaimed
 }
 
 func (fi *FileInfo) fileOutOfDate() error {
-	fi.RejectReason = protos.RejectReason_OUT_OF_DATE
+	fi.RejectReason = OutOfDate
 	return ErrFileOutOfDate
 }
 
 func (fi *FileInfo) userNotOwner() error {
-	fi.RejectReason = protos.RejectReason_NOT_OWNER
+	fi.RejectReason = NotOwner
 	return ErrUserNotOwner
 }
 
@@ -191,23 +210,4 @@ func (fi *FileInfo) userNotOwner() error {
 // Deliberately pass by value not by pointer!
 func (fi FileInfo) MarshalBinary() ([]byte, error) {
 	return json.Marshal(fi)
-}
-
-// ToProto converts a FileInfo to a protos.FileInfo
-func (fi *FileInfo) ToProto() *protos.FileInfo {
-	return &protos.FileInfo{
-		FileId:       fi.FileId,
-		FileHash:     fi.FileHash,
-		UserIds:      fi.UserIds,
-		BranchName:   fi.BranchName,
-		ClaimMode:    fi.ClaimMode,
-		RejectReason: fi.RejectReason,
-	}
-}
-
-// FileInfosToProto converts a slice of FileInfo to a slice of protos.FileInfo
-func FileInfosToProto(fileInfos []*FileInfo, outTarget *[]*protos.FileInfo) {
-	for _, fi := range fileInfos {
-		*outTarget = append(*outTarget, fi.ToProto())
-	}
 }

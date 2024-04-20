@@ -43,7 +43,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _
 	}
 
 	protoFiles := make([]*protos.FileInfo, 0, len(files))
-	models.FileInfosToProto(files, &protoFiles)
+	fileInfosToProto(files, &protoFiles)
 	return &protos.ListFilesResponse{
 		NextCursor: cursor,
 		Files:      protoFiles,
