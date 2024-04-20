@@ -45,7 +45,7 @@ var claimFilesCmd = &cobra.Command{
 
 		ctx, cancel := buildContext(gitRepo, gitUser)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(ctx, serverAddress)
+		conn, client := client.NewColabShieldClient(serverAddress)
 		defer conn.Close()
 
 		response, err := client.Claim(ctx, payload)

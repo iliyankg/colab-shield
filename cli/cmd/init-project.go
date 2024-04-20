@@ -17,7 +17,7 @@ var initProjectCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(ctx, serverAddress)
+		conn, client := client.NewColabShieldClient(serverAddress)
 		defer conn.Close()
 
 		payload := &protos.InitProjectRequest{
