@@ -12,7 +12,7 @@ import (
 )
 
 func NewColabShieldClient(ctx context.Context, addr string) (*grpc.ClientConn, pb.ColabShieldClient) {
-	// TODO: Fix the insecure.NewCredentials() call
+	// FIXME: Fix the insecure.NewCredentials() call
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not connect")

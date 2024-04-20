@@ -10,6 +10,7 @@ import (
 
 var (
 	filesToClaim []string
+	claimMode    int32
 	softClaim    bool
 )
 
@@ -17,6 +18,7 @@ func init() {
 	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
 
+	claimFilesCmd.Flags().Int32VarP(&claimMode, "mode", "m", int32(pb.ClaimMode_EXCLUSIVE), "claim mode")
 	claimFilesCmd.Flags().BoolVarP(&softClaim, "soft-claim", "s", false, "Soft claim only exposes any files that may get rejected if any. Nothing is saved to the DB")
 }
 
@@ -25,6 +27,10 @@ var claimFilesCmd = &cobra.Command{
 	Short: "Claim file(s) for editing",
 	Long:  `Claim file(s) for editing`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if !validateClaimMode(claimMode) {
+			log.Fatal().Msg("Invalid claim mode. Must be 1 (EXCLUSIVE) or 2 (SHARED).")
+		}
+
 		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, filesToClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
@@ -33,7 +39,7 @@ var claimFilesCmd = &cobra.Command{
 		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
 
 		// TODO: Implement proper claim mode functionality
-		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode_EXCLUSIVE, softClaim)
+		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode(claimMode), softClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
@@ -56,4 +62,18 @@ var claimFilesCmd = &cobra.Command{
 			log.Fatal().Msg("status not OK")
 		}
 	},
+}
+
+// validateClaimMode validates the incoming integer is valid.
+// FIXME: This ties is to protobuf and not ideal.
+func validateClaimMode(mode int32) bool {
+	switch mode {
+	case int32(pb.ClaimMode_EXCLUSIVE):
+	case int32(pb.ClaimMode_SHARED):
+		return true
+	default:
+		return false
+	}
+
+	return false
 }
