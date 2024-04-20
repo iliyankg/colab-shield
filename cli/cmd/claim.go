@@ -38,7 +38,6 @@ var claimFilesCmd = &cobra.Command{
 
 		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
 
-		// TODO: Implement proper claim mode functionality
 		payload, err := newClaimFilesRequest(filesToClaim, hashes, pb.ClaimMode(claimMode), softClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
