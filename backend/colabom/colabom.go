@@ -1,39 +1,56 @@
-package grpcserver
+package colabom
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+)
+
+var (
+	// Common status error for rejected files regardless of internal reason.
+	ErrUnmarshalFail = errors.New("failed to unmarshal JSON from Redis hash")
+	ErrRedisError    = errors.New("encountered an error with Redis")
 )
 
 type MissingFileHandler func(idx int) *models.FileInfo
 
-var (
-	// Common status error for rejected files regardless of internal reason.
-	ErrRejectedFiles = status.Error(codes.FailedPrecondition, "rejected files")
-	ErrUnmarshalFail = status.Error(codes.Internal, "failed to unmarshal JSON from Redis hash")
-	ErrRedisError    = status.Error(codes.Internal, "encountered an error with Redis")
-)
-
 // getFileInfos reads the file infos from the Redis hash and populates the outFiles slice.
 // Using redis.Cmdable to allow for both a client and a transaction to be passed in.
-func getFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, missingFileHandler MissingFileHandler, outFiles *[]*models.FileInfo) error {
+func GetFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, missingFileHandler MissingFileHandler, outFiles *[]*models.FileInfo) error {
 	result, err := rc.JSONMGet(ctx, ".", keys...).Result()
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to read keys from Redis hash")
-		return err
+		return ErrRedisError
 	}
 
 	err = parseFileInfos(logger, keys, result, missingFileHandler, outFiles)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to parse file infos from Redis hash")
 		return err
+	}
+
+	return nil
+}
+
+// setFileInfos writes the file infos to the Redis JSON.
+// Only redis client is used because JSON MSet uses  MULTI/EXEC internally already and redis does not support nested transactions.
+func SetFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, fileInfos []*models.FileInfo) error {
+	// build the mset params
+	mSetParams := make([]any, 0, len(fileInfos)*3)
+	for i, file := range fileInfos {
+		mSetParams = append(mSetParams, keys[i], ".", *file)
+	}
+
+	logger.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
+	// Not pipelined because it uses MULTI/EXEC internally already and redis does not support
+	// nested transactions.
+	if err := rc.JSONMSet(ctx, mSetParams...).Err(); err != nil {
+		logger.Error().Err(err).Msg("Failed to write to Redis hash")
+		return ErrRedisError
 	}
 
 	return nil
@@ -61,26 +78,6 @@ func parseFileInfos(logger zerolog.Logger, keys []string, toParse []any, missing
 		}
 
 		*outFileInfos = append(*outFileInfos, fileInfo)
-	}
-
-	return nil
-}
-
-// setFileInfos writes the file infos to the Redis JSON.
-// Only redis client is used because JSON MSet uses  MULTI/EXEC internally already and redis does not support nested transactions.
-func setFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, fileInfos []*models.FileInfo) error {
-	// build the mset params
-	mSetParams := make([]any, 0, len(fileInfos)*3)
-	for i, file := range fileInfos {
-		mSetParams = append(mSetParams, keys[i], ".", *file)
-	}
-
-	logger.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
-	// Not pipelined because it uses MULTI/EXEC internally already and redis does not support
-	// nested transactions.
-	if err := rc.JSONMSet(ctx, mSetParams...).Err(); err != nil {
-		logger.Error().Err(err).Msg("Failed to write to Redis hash")
-		return err
 	}
 
 	return nil

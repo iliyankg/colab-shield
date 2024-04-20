@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 
+	"github.com/iliyankg/colab-shield/backend/colabom"
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
@@ -20,7 +21,7 @@ func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Clien
 
 	keys := make([]string, 0, len(request.FileIds))
 	for _, fileId := range request.FileIds {
-		keys = append(keys, buildRedisKeyForFile(projectId, fileId))
+		keys = append(keys, colabom.BuildRedisKeyForFile(projectId, fileId))
 	}
 
 	// Handler for missing files in the Redis hash
@@ -29,8 +30,8 @@ func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Clien
 	}
 
 	files := make([]*models.FileInfo, 0, len(request.FileIds))
-	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
-		return nil, err
+	if err := colabom.GetFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
+		return nil, parseColabomError(err)
 	}
 
 	logger.Info().Msg("Getting successful")

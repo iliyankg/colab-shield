@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/iliyankg/colab-shield/backend/colabom"
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
@@ -37,8 +38,8 @@ func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _
 	}
 
 	files := make([]*models.FileInfo, 0, len(keys))
-	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
-		return nil, err
+	if err := colabom.GetFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
+		return nil, parseColabomError(err)
 	}
 
 	protoFiles := make([]*protos.FileInfo, 0, len(files))

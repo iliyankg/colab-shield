@@ -2,8 +2,8 @@ package grpcserver
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/iliyankg/colab-shield/backend/colabom"
 	"github.com/iliyankg/colab-shield/protos"
 )
 
@@ -14,17 +14,12 @@ type protoFileId interface {
 	GetFileId() string
 }
 
-// buildRedisKeyForFile builds the Redis key for the given project and file IDs
-func buildRedisKeyForFile(projectId string, fileId string) string {
-	return fmt.Sprintf("project:%s:file:%s", projectId, fileId)
-}
-
 // keysFromFileRequests extracts the file IDs from the given file requests
 // and builds the Redis keys for them
 func keysFromFileRequests[T protoFileId](projectId string, pbFiles []T, outKeys *[]string) {
 	for _, file := range pbFiles {
 		fileId := file.GetFileId()
-		*outKeys = append(*outKeys, buildRedisKeyForFile(projectId, fileId))
+		*outKeys = append(*outKeys, colabom.BuildRedisKeyForFile(projectId, fileId))
 	}
 }
 

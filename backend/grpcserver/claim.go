@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/iliyankg/colab-shield/backend/colabom"
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
@@ -35,8 +36,8 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 	// Watch function to ensure keys do not get modified by another request while this transaction
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
-		if err := getFileInfos(ctx, logger, tx, keys, missingFileHandler, &files); err != nil {
-			return err
+		if err := colabom.GetFileInfos(ctx, logger, tx, keys, missingFileHandler, &files); err != nil {
+			return parseColabomError(err)
 		}
 
 		claimFiles(userId, files, request.Files, &rejectedFiles)
@@ -50,7 +51,7 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 			return nil
 		}
 
-		return setFileInfos(ctx, logger, tx, keys, files)
+		return parseColabomError(colabom.SetFileInfos(ctx, logger, tx, keys, files))
 	}
 
 	// Execute the watch function

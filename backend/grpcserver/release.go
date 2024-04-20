@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/iliyankg/colab-shield/backend/colabom"
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
@@ -26,7 +27,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 
 	keys := make([]string, 0, len(request.FileIds))
 	for _, fileId := range request.FileIds {
-		keys = append(keys, buildRedisKeyForFile(projectId, fileId))
+		keys = append(keys, colabom.BuildRedisKeyForFile(projectId, fileId))
 	}
 
 	// Handler for missing files in the Redis hash
@@ -38,8 +39,8 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 	// Watch function to ensure keys do not get modified by another request while this transaction
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
-		if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
-			return err
+		if err := colabom.GetFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
+			return parseColabomError(err)
 		}
 
 		if len(rejectedFiles) > 0 {
@@ -52,7 +53,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 			return ErrRejectedFiles
 		}
 
-		return setFileInfos(ctx, logger, tx, keys, files)
+		return parseColabomError(colabom.SetFileInfos(ctx, logger, tx, keys, files))
 	}
 
 	// Execute the watch function
