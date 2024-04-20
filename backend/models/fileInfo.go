@@ -20,6 +20,8 @@ var (
 // TODO: Look into: https://pkg.go.dev/github.com/redis/rueidis/om#section-readme
 // TODO: Look into: https://stackoverflow.com/questions/11126793/json-and-dealing-with-unexported-fields
 type FileInfo struct {
+	Key          string              `json:"key" redis:",key"` // the redis:",key" is required to indicate which field is the ULID key
+	Ver          int64               `json:"ver" redis:",ver"` // the redis:",ver" is required to do optimistic locking to prevent lost update
 	FileId       string              `json:"fileId"`
 	FileHash     string              `json:"fileHash"`
 	UserIds      []string            `json:"userIds"`

@@ -14,6 +14,7 @@ import (
 
 type MissingFileHandler func(idx int) *models.FileInfo
 
+// TODO: Uncouple code from grpc errors to generic errors.
 var (
 	// Common status error for rejected files regardless of internal reason.
 	ErrRejectedFiles = status.Error(codes.FailedPrecondition, "rejected files")
