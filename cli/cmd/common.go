@@ -24,6 +24,9 @@ func buildContext(projectId string, userId string) (context.Context, context.Can
 	return metadata.NewOutgoingContext(ctx, metaInfo), cancel
 }
 
+// newClaimFilesRequest creates a new ClaimFilesRequest from the given files and hashes
+// Same claim mode is applied to all files.
+// TODO: Per file claim mode support?
 func newClaimFilesRequest(files []string, hashes []string, claimMode pb.ClaimMode, softClaim bool) (*pb.ClaimFilesRequest, error) {
 	if len(files) != len(hashes) {
 		return nil, ErrFileToHashMissmatch
