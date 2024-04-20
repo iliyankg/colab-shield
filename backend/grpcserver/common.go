@@ -68,7 +68,7 @@ func parseFileInfos(logger zerolog.Logger, keys []string, toParse []any, missing
 
 // setFileInfos writes the file infos to the Redis JSON.
 // Only redis client is used because JSON MSet uses  MULTI/EXEC internally already and redis does not support nested transactions.
-func setFileInfos(ctx context.Context, logger zerolog.Logger, rc *redis.Client, keys []string, fileInfos []*models.FileInfo) error {
+func setFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, keys []string, fileInfos []*models.FileInfo) error {
 	// build the mset params
 	mSetParams := make([]any, 0, len(fileInfos)*3)
 	for i, file := range fileInfos {

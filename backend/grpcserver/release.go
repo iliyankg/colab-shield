@@ -52,7 +52,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 			return ErrRejectedFiles
 		}
 
-		return setFileInfos(ctx, logger, rc, keys, files)
+		return setFileInfos(ctx, logger, tx, keys, files)
 	}
 
 	// Execute the watch function
