@@ -5,17 +5,17 @@ import (
 	"errors"
 
 	"github.com/iliyankg/colab-shield/backend/models"
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func updateHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *pb.UpdateFilesRequest) (*pb.UpdateFilesResponse, error) {
+func updateHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *protos.UpdateFilesRequest) (*protos.UpdateFilesResponse, error) {
 	if len(request.Files) == 0 {
 		logger.Warn().Msg("No files to update")
 		// TODO: Consider returning an error here
-		return &pb.UpdateFilesResponse{
-			Status: pb.Status_OK,
+		return &protos.UpdateFilesResponse{
+			Status: protos.Status_OK,
 		}, nil
 	}
 
@@ -58,11 +58,11 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client,
 
 	if errors.Is(err, ErrRejectedFiles) {
 		logger.Info().Msg("Updating failed due to rejected files")
-		protoRejectedFiles := make([]*pb.FileInfo, 0, len(rejectedFiles))
+		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
 		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
-		return &pb.UpdateFilesResponse{
-			Status:        pb.Status_REJECTED,
+		return &protos.UpdateFilesResponse{
+			Status:        protos.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
 	} else if err != nil {
@@ -72,12 +72,12 @@ func updateHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client,
 
 	logger.Info().Msg("Updating successful")
 
-	return &pb.UpdateFilesResponse{
-		Status: pb.Status_OK,
+	return &protos.UpdateFilesResponse{
+		Status: protos.Status_OK,
 	}, nil
 }
 
-func updateFiles(userId string, branchName string, fileInfos []*models.FileInfo, pbFiles []*pb.UpdateFileInfo, outRejectedFiles *[]*models.FileInfo) {
+func updateFiles(userId string, branchName string, fileInfos []*models.FileInfo, pbFiles []*protos.UpdateFileInfo, outRejectedFiles *[]*models.FileInfo) {
 	// update the files with the new file hashes
 	for i := range fileInfos {
 		if err := fileInfos[i].Update(userId, pbFiles[i].OldHash, pbFiles[i].FileHash, branchName); err != nil {

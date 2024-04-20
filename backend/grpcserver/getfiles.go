@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"github.com/iliyankg/colab-shield/backend/models"
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *pb.GetFilesRequest) (*pb.GetFilesResponse, error) {
+func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *protos.GetFilesRequest) (*protos.GetFilesResponse, error) {
 	if len(request.FileIds) == 0 {
 		logger.Warn().Msg("No files to update")
 		// TODO: Consider returning an error here
-		return &pb.GetFilesResponse{}, nil
+		return &protos.GetFilesResponse{}, nil
 	}
 
 	logger.Info().Msgf("Getting... %d files", len(request.FileIds))
@@ -34,9 +34,9 @@ func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Clien
 	}
 
 	logger.Info().Msg("Getting successful")
-	protoFiles := make([]*pb.FileInfo, 0, len(files))
+	protoFiles := make([]*protos.FileInfo, 0, len(files))
 	models.FileInfosToProto(files, &protoFiles)
-	return &pb.GetFilesResponse{
+	return &protos.GetFilesResponse{
 		Files: protoFiles,
 	}, nil
 }

@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/iliyankg/colab-shield/backend/models"
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
+func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *protos.ListFilesRequest) (*protos.ListFilesResponse, error) {
 	if request.PageSize == 0 {
 		logger.Warn().Msg("No page size specified")
-		return &pb.ListFilesResponse{}, nil
+		return &protos.ListFilesResponse{}, nil
 	}
 
 	logger.Info().Msgf("Listing %d files for project %s", request.PageSize, projectId)
@@ -28,7 +28,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _
 
 	if len(keys) == 0 {
 		logger.Warn().Msgf("No files found for match: %s", match)
-		return &pb.ListFilesResponse{}, nil
+		return &protos.ListFilesResponse{}, nil
 	}
 
 	// Handler for missing files in the Redis hash
@@ -41,9 +41,9 @@ func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _
 		return nil, err
 	}
 
-	protoFiles := make([]*pb.FileInfo, 0, len(files))
+	protoFiles := make([]*protos.FileInfo, 0, len(files))
 	models.FileInfosToProto(files, &protoFiles)
-	return &pb.ListFilesResponse{
+	return &protos.ListFilesResponse{
 		NextCursor: cursor,
 		Files:      protoFiles,
 	}, nil

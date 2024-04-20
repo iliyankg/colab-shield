@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 )
 
 // Represents a type constraint for FileId field and getter
 // in the respective proto messages. Used for generics.
 type protoFileId interface {
-	*pb.ClaimFileInfo | *pb.UpdateFileInfo
+	*protos.ClaimFileInfo | *protos.UpdateFileInfo
 	GetFileId() string
 }
 

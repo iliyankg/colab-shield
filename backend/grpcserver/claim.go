@@ -5,17 +5,17 @@ import (
 	"errors"
 
 	"github.com/iliyankg/colab-shield/backend/models"
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
+func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *protos.ClaimFilesRequest) (*protos.ClaimFilesResponse, error) {
 	if len(request.Files) == 0 {
 		logger.Warn().Msg("No files to claim")
 		// TODO: Consider returning an error here
-		return &pb.ClaimFilesResponse{
-			Status: pb.Status_OK,
+		return &protos.ClaimFilesResponse{
+			Status: protos.Status_OK,
 		}, nil
 	}
 
@@ -58,11 +58,11 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 
 	if errors.Is(err, ErrRejectedFiles) {
 		logger.Info().Msg("Claiming failed due to rejected files")
-		protoRejectedFiles := make([]*pb.FileInfo, 0, len(rejectedFiles))
+		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
 		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
-		return &pb.ClaimFilesResponse{
-			Status:        pb.Status_REJECTED,
+		return &protos.ClaimFilesResponse{
+			Status:        protos.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
 	} else if err != nil {
@@ -73,12 +73,12 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 	logger.Info().Msg("Claiming successful")
 
 	// TODO: Consider returning the files that were claimed succesfully
-	return &pb.ClaimFilesResponse{
-		Status: pb.Status_OK,
+	return &protos.ClaimFilesResponse{
+		Status: protos.Status_OK,
 	}, nil
 }
 
-func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*pb.ClaimFileInfo, outRejectedFiles *[]*models.FileInfo) {
+func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*protos.ClaimFileInfo, outRejectedFiles *[]*models.FileInfo) {
 	for i := range fileInfos {
 		reqFile := claimRequests[i]
 

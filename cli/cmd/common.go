@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -27,21 +27,21 @@ func buildContext(projectId string, userId string) (context.Context, context.Can
 // newClaimFilesRequest creates a new ClaimFilesRequest from the given files and hashes
 // Same claim mode is applied to all files.
 // TODO: Per file claim mode support?
-func newClaimFilesRequest(files []string, hashes []string, claimMode pb.ClaimMode, softClaim bool) (*pb.ClaimFilesRequest, error) {
+func newClaimFilesRequest(files []string, hashes []string, claimMode protos.ClaimMode, softClaim bool) (*protos.ClaimFilesRequest, error) {
 	if len(files) != len(hashes) {
 		return nil, ErrFileToHashMissmatch
 	}
 
-	claimFileInfos := make([]*pb.ClaimFileInfo, 0, len(filesToClaim))
+	claimFileInfos := make([]*protos.ClaimFileInfo, 0, len(filesToClaim))
 	for i, file := range files {
-		claimFileInfos = append(claimFileInfos, &pb.ClaimFileInfo{
+		claimFileInfos = append(claimFileInfos, &protos.ClaimFileInfo{
 			FileId:    file,
 			FileHash:  hashes[i],
 			ClaimMode: claimMode,
 		})
 	}
 
-	return &pb.ClaimFilesRequest{
+	return &protos.ClaimFilesRequest{
 		BranchName: gitBranch,
 		Files:      claimFileInfos,
 		SoftClaim:  softClaim,

@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 )
 
 func TestNewFileInfo(t *testing.T) {
@@ -23,7 +23,7 @@ func TestNewFileInfo(t *testing.T) {
 	if fi.BranchName != "branchName" {
 		t.Errorf("Expected branch name to be 'branchName', got %s", fi.BranchName)
 	}
-	if fi.ClaimMode != pb.ClaimMode_UNCLAIMED {
+	if fi.ClaimMode != protos.ClaimMode_UNCLAIMED {
 		t.Errorf("Expected claim mode to be 0, got %d", fi.ClaimMode)
 	}
 }
@@ -34,7 +34,7 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHash", pb.ClaimMode_EXCLUSIVE); err != nil {
+		if err := fi.Claim("userId", "fileHash", protos.ClaimMode_EXCLUSIVE); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
@@ -45,7 +45,7 @@ func TestFileInfo_Claim(t *testing.T) {
 		if fi.UserIds[0] != "userId" {
 			t.Errorf("Expected user ID to be 'userId', got %s", fi.UserIds[0])
 		}
-		if fi.ClaimMode != pb.ClaimMode_EXCLUSIVE {
+		if fi.ClaimMode != protos.ClaimMode_EXCLUSIVE {
 			t.Errorf("Expected claim mode to be 1, got %d", fi.ClaimMode)
 		}
 	})
@@ -55,7 +55,7 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHashTwo", pb.ClaimMode_EXCLUSIVE); err != ErrFileOutOfDate {
+		if err := fi.Claim("userId", "fileHashTwo", protos.ClaimMode_EXCLUSIVE); err != ErrFileOutOfDate {
 			t.Errorf("Expected error to be ErrFileOutOfDate, got %v", err)
 		}
 	})
@@ -65,12 +65,12 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHash", pb.ClaimMode_EXCLUSIVE); err != nil {
+		if err := fi.Claim("userId", "fileHash", protos.ClaimMode_EXCLUSIVE); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
 		// Assert
-		if err := fi.Claim("userIdTwo", "fileHash", pb.ClaimMode_EXCLUSIVE); err != ErrFileAlreadyClaimed {
+		if err := fi.Claim("userIdTwo", "fileHash", protos.ClaimMode_EXCLUSIVE); err != ErrFileAlreadyClaimed {
 			t.Errorf("Expected error to be ErrFileAlreadyClaimed, got %v", err)
 		}
 	})
@@ -80,12 +80,12 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHash", pb.ClaimMode_SHARED); err != nil {
+		if err := fi.Claim("userId", "fileHash", protos.ClaimMode_SHARED); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
 		// Assert
-		if err := fi.Claim("userIdTwo", "fileHash", pb.ClaimMode_SHARED); err != nil {
+		if err := fi.Claim("userIdTwo", "fileHash", protos.ClaimMode_SHARED); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
@@ -99,7 +99,7 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHash", pb.ClaimMode_UNCLAIMED); err != ErrInvalidClaimMode {
+		if err := fi.Claim("userId", "fileHash", protos.ClaimMode_UNCLAIMED); err != ErrInvalidClaimMode {
 			t.Errorf("Expected error to be ErrInvalidClaimMode, got %v", err)
 		}
 	})
@@ -109,12 +109,12 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHash", pb.ClaimMode_EXCLUSIVE); err != nil {
+		if err := fi.Claim("userId", "fileHash", protos.ClaimMode_EXCLUSIVE); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
 		// Assert
-		if err := fi.Claim("userIdTwo", "fileHash", pb.ClaimMode_SHARED); err != ErrFileAlreadyClaimed {
+		if err := fi.Claim("userIdTwo", "fileHash", protos.ClaimMode_SHARED); err != ErrFileAlreadyClaimed {
 			t.Errorf("Expected error to be ErrInvalidClaimMode, got %v", err)
 		}
 	})
@@ -124,12 +124,12 @@ func TestFileInfo_Claim(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Claim("userId", "fileHash", pb.ClaimMode_SHARED); err != nil {
+		if err := fi.Claim("userId", "fileHash", protos.ClaimMode_SHARED); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
 		// Assert
-		if err := fi.Claim("userIdTwo", "fileHash", pb.ClaimMode_EXCLUSIVE); err != ErrInvalidClaimMode {
+		if err := fi.Claim("userIdTwo", "fileHash", protos.ClaimMode_EXCLUSIVE); err != ErrInvalidClaimMode {
 			t.Errorf("Expected error to be ErrInvalidClaimMode, got %v", err)
 		}
 	})
@@ -192,7 +192,7 @@ func TestFileInfo_Release(t *testing.T) {
 		if len(fi.UserIds) != 0 {
 			t.Errorf("Expected user IDs to be empty, got %v", fi.UserIds)
 		}
-		if fi.ClaimMode != pb.ClaimMode_UNCLAIMED {
+		if fi.ClaimMode != protos.ClaimMode_UNCLAIMED {
 			t.Errorf("Expected claim mode to be 0, got %d", fi.ClaimMode)
 		}
 	})
@@ -308,10 +308,10 @@ func TestFileInfo_NewMissingFileInfo(t *testing.T) {
 	if fi.BranchName != "" {
 		t.Errorf("Expected branch name to be empty, got %s", fi.BranchName)
 	}
-	if fi.ClaimMode != pb.ClaimMode_UNCLAIMED {
+	if fi.ClaimMode != protos.ClaimMode_UNCLAIMED {
 		t.Errorf("Expected claim mode to be 0, got %d", fi.ClaimMode)
 	}
-	if fi.RejectReason != pb.RejectReason_MISSING {
+	if fi.RejectReason != protos.RejectReason_MISSING {
 		t.Errorf("Expected reject reason to be 5, got %d", fi.RejectReason)
 	}
 }
@@ -339,11 +339,11 @@ func TestFileInfo_UpgradeMissingToNew(t *testing.T) {
 			t.Errorf("Expected user IDs to be empty, got %v", fi.UserIds)
 		}
 
-		if fi.ClaimMode != pb.ClaimMode_UNCLAIMED {
+		if fi.ClaimMode != protos.ClaimMode_UNCLAIMED {
 			t.Errorf("Expected claim mode to be 0, got %d", fi.ClaimMode)
 		}
 
-		if fi.RejectReason != pb.RejectReason_NONE {
+		if fi.RejectReason != protos.RejectReason_NONE {
 			t.Errorf("Expected reject reason to be 0, got %d", fi.RejectReason)
 		}
 	})

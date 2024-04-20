@@ -5,17 +5,17 @@ import (
 	"errors"
 
 	"github.com/iliyankg/colab-shield/backend/models"
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
+func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *protos.ReleaseFilesRequest) (*protos.ReleaseFilesResponse, error) {
 	if len(request.FileIds) == 0 {
 		logger.Warn().Msg("No files to release")
 		// TODO: Consider returning an error here
-		return &pb.ReleaseFilesResponse{
-			Status: pb.Status_OK,
+		return &protos.ReleaseFilesResponse{
+			Status: protos.Status_OK,
 		}, nil
 	}
 
@@ -60,11 +60,11 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 
 	if errors.Is(err, ErrRejectedFiles) {
 		logger.Info().Msg("Releasing failed due to rejected files")
-		protoRejectedFiles := make([]*pb.FileInfo, 0, len(rejectedFiles))
+		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
 		models.FileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
-		return &pb.ReleaseFilesResponse{
-			Status:        pb.Status_REJECTED,
+		return &protos.ReleaseFilesResponse{
+			Status:        protos.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
 	} else if err != nil {
@@ -74,8 +74,8 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 
 	logger.Info().Msg("Releasing successful")
 
-	return &pb.ReleaseFilesResponse{
-		Status: pb.Status_OK,
+	return &protos.ReleaseFilesResponse{
+		Status: protos.Status_OK,
 	}, nil
 }
 

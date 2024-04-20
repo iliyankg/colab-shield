@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/iliyankg/colab-shield/cli/client"
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ var initProjectCmd = &cobra.Command{
 		conn, client := client.NewColabShieldClient(ctx, serverAddress)
 		defer conn.Close()
 
-		payload := &pb.InitProjectRequest{
+		payload := &protos.InitProjectRequest{
 			ProjectId: gitBranch,
 		}
 
@@ -29,7 +29,7 @@ var initProjectCmd = &cobra.Command{
 			log.Fatal().Err(err).Msg("failed to init project")
 		}
 
-		if response.Status != pb.Status_OK {
+		if response.Status != protos.Status_OK {
 			log.Fatal().Msg("status not OK")
 		}
 	},

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	pb "github.com/iliyankg/colab-shield/protos"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -14,7 +14,7 @@ import (
 )
 
 type ColabShieldServer struct {
-	pb.UnimplementedColabShieldServer
+	protos.UnimplementedColabShieldServer
 	redisClient *redis.Client
 }
 
@@ -23,7 +23,7 @@ func Serve(port int, redisClient *redis.Client) (*grpc.Server, error) {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(UnaryInterceptor),
 	)
-	pb.RegisterColabShieldServer(grpcServer, NewColabShieldServer(redisClient))
+	protos.RegisterColabShieldServer(grpcServer, NewColabShieldServer(redisClient))
 
 	// Listen on port
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
@@ -50,21 +50,21 @@ func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
 	}
 }
 
-func (s *ColabShieldServer) HealthCheck(ctx context.Context, _ *emptypb.Empty) (*pb.HealthCheckResponse, error) {
-	return &pb.HealthCheckResponse{}, nil
+func (s *ColabShieldServer) HealthCheck(ctx context.Context, _ *emptypb.Empty) (*protos.HealthCheckResponse, error) {
+	return &protos.HealthCheckResponse{}, nil
 }
 
-func (s *ColabShieldServer) InitProject(ctx context.Context, request *pb.InitProjectRequest) (*pb.InitProjectResponse, error) {
+func (s *ColabShieldServer) InitProject(ctx context.Context, request *protos.InitProjectRequest) (*protos.InitProjectResponse, error) {
 	log.Error().Msg("InitProject not implemented")
 	return nil, nil
 }
 
-func (s *ColabShieldServer) ListProjects(ctx context.Context, _ *emptypb.Empty) (*pb.ListProjectsResponse, error) {
+func (s *ColabShieldServer) ListProjects(ctx context.Context, _ *emptypb.Empty) (*protos.ListProjectsResponse, error) {
 	log.Error().Msg("ListProjects not implemented")
 	return nil, nil
 }
 
-func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFilesRequest) (*pb.ListFilesResponse, error) {
+func (s *ColabShieldServer) ListFiles(ctx context.Context, request *protos.ListFilesRequest) (*protos.ListFilesResponse, error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Logger()
@@ -72,7 +72,7 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *pb.ListFiles
 	return listHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }
 
-func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesRequest) (*pb.ClaimFilesResponse, error) {
+func (s *ColabShieldServer) Claim(ctx context.Context, request *protos.ClaimFilesRequest) (*protos.ClaimFilesResponse, error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("branchName", request.BranchName).
@@ -81,7 +81,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, request *pb.ClaimFilesReq
 	return claimHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }
 
-func (s *ColabShieldServer) Update(ctx context.Context, request *pb.UpdateFilesRequest) (*pb.UpdateFilesResponse, error) {
+func (s *ColabShieldServer) Update(ctx context.Context, request *protos.UpdateFilesRequest) (*protos.UpdateFilesResponse, error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Str("branchName", request.BranchName).
@@ -90,7 +90,7 @@ func (s *ColabShieldServer) Update(ctx context.Context, request *pb.UpdateFilesR
 	return updateHandler(ctx, logger, s.redisClient, userIdFromCtx(ctx), projectIdFromCtx(ctx), request)
 }
 
-func (s *ColabShieldServer) Release(ctx context.Context, request *pb.ReleaseFilesRequest) (*pb.ReleaseFilesResponse, error) {
+func (s *ColabShieldServer) Release(ctx context.Context, request *protos.ReleaseFilesRequest) (*protos.ReleaseFilesResponse, error) {
 	logger := zerolog.Ctx(ctx).
 		With().
 		Logger()

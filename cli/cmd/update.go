@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	pb "github.com/iliyankg/colab-shield/protos"
-
 	"github.com/iliyankg/colab-shield/cli/client"
 	"github.com/iliyankg/colab-shield/cli/gitutils"
+	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -48,27 +47,27 @@ var updateCmd = &cobra.Command{
 			log.Fatal().Err(err).Msg("Failed to update files")
 		}
 
-		if response.Status != pb.Status_OK {
+		if response.Status != protos.Status_OK {
 			log.Fatal().Msg("Failed to update files")
 		}
 	},
 }
 
-func newUpdateFilesRequest(files []string, hashes []string, headHashes []string) (*pb.UpdateFilesRequest, error) {
+func newUpdateFilesRequest(files []string, hashes []string, headHashes []string) (*protos.UpdateFilesRequest, error) {
 	if len(files) != len(hashes) || len(files) != len(headHashes) {
 		return nil, ErrFileToHashMissmatch
 	}
 
-	updateFileInfos := make([]*pb.UpdateFileInfo, 0, len(filesToUpdate))
+	updateFileInfos := make([]*protos.UpdateFileInfo, 0, len(filesToUpdate))
 	for i, file := range files {
-		updateFileInfos = append(updateFileInfos, &pb.UpdateFileInfo{
+		updateFileInfos = append(updateFileInfos, &protos.UpdateFileInfo{
 			FileId:   file,
 			FileHash: hashes[i],
 			OldHash:  headHashes[i],
 		})
 	}
 
-	return &pb.UpdateFilesRequest{
+	return &protos.UpdateFilesRequest{
 		BranchName: gitBranch,
 		Files:      updateFileInfos,
 	}, nil
