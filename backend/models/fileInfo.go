@@ -14,6 +14,7 @@ var (
 )
 
 // Enum for claim mode
+// Should be kept in sync with the protobuf file.
 type ClaimMode int32
 
 const (
@@ -23,6 +24,7 @@ const (
 )
 
 // Enum for reject reason
+// Should be kept in sync with the protobuf file.
 type RejectReason int32
 
 const (
