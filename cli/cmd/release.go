@@ -16,7 +16,7 @@ func init() {
 	claimFilesCmd.MarkFlagRequired("file")
 }
 
-var release = &cobra.Command{
+var releaseCmd = &cobra.Command{
 	Use:   "release",
 	Short: "Release file(s) previously claimed.",
 	Long:  `Release file(s) previously claimed.`,

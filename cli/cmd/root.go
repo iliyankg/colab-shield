@@ -32,7 +32,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&gitBranch, "gitBranch", "b", "", "git branch")
 	rootCmd.MarkFlagRequired("gitBranch")
 
-	rootCmd.AddCommand(release)
+	rootCmd.AddCommand(releaseCmd)
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(initProjectCmd)
 	rootCmd.AddCommand(listCmd)
