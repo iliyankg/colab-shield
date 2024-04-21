@@ -40,5 +40,6 @@ jobs:
       uses: test-summary/action@v2.3
       if: ${{ always() }}
       with:
-        path: ${{ env.BACKEND_DIRECTORY }}/report.xml
+        paths: |
+          ${{ env.BACKEND_DIRECTORY }}/report.xml
       
