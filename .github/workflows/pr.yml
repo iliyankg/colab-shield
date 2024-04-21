@@ -6,8 +6,10 @@ on:
       - main
 
 jobs:
-  build:
+  test-backend:
     runs-on: ubuntu-latest
+    env:
+      BACKEND_DIRECTORY: backend
 
     steps:
     - uses: actions/checkout@v3
@@ -16,13 +18,27 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.22'
+
+    - name: Install Report Generator
+      if: ${{ success() }}
+      run: |
+        go install github.com/jstemmer/go-junit-report@latest
     
     - name: Install dependencies
-      run: | 
-        cd backend
+      working-directory: ${{ env.BACKEND_DIRECTORY }}
+      if: ${{ success() }}
+      run: |
         go mod download
     
     - name: Test
-      run: | 
-        cd backend
-        go test -v ./...
+      working-directory: ${{ env.BACKEND_DIRECTORY }}
+      if: ${{ success() }}
+      run: |
+        go test -v ./... | go-junit-report -set-exit-code > report.xml
+      
+    - name: Test Summary
+      uses: test-summary/action@v2.3
+      if: ${{ always() }}
+      with:
+        path: ${{ env.BACKEND_DIRECTORY }}/report.xml
+      
