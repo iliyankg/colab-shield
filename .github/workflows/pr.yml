@@ -22,7 +22,7 @@ jobs:
     - name: Install Report Generator
       if: ${{ success() }}
       run: |
-        go install github.com/jstemmer/go-junit-report@latest
+        go install github.com/becheran/go-testreport@latest
     
     - name: Install dependencies
       working-directory: ${{ env.BACKEND_DIRECTORY }}
@@ -34,13 +34,4 @@ jobs:
       working-directory: ${{ env.BACKEND_DIRECTORY }}
       if: ${{ success() }}
       run: |
-        go test -v ./... | go-junit-report -set-exit-code > report.xml
-      
-    - name: Test Summary
-      uses: dorny/test-reporter@v1
-      if: ${{ always() }}
-      with:
-        name: test-results
-        path: ${{ env.BACKEND_DIRECTORY }}/report.xml
-        reporter: java-junit
-      
+        go test ./... -json | go-testreport $GITHUB_STEP_SUMMARY    
