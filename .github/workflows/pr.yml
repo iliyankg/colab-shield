@@ -42,5 +42,5 @@ jobs:
       with:
         name: test-results
         path: ${{ env.BACKEND_DIRECTORY }}/report.xml
-        reporter: jest-junit
+        reporter: java-junit
       
