@@ -1,0 +1,37 @@
+name: Pull Request Validation
+
+on: 
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    env:
+      BACKEND_DIRECTORY: backend
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Install Report Generator
+      if: ${{ success() }}
+      run: |
+        go install github.com/becheran/go-testreport@latest
+    
+    - name: Install dependencies
+      working-directory: ${{ env.BACKEND_DIRECTORY }}
+      if: ${{ success() }}
+      run: |
+        go mod download
+    
+    - name: Test
+      working-directory: ${{ env.BACKEND_DIRECTORY }}
+      if: ${{ success() }}
+      run: |
+        go test ./... -json | go-testreport $GITHUB_STEP_SUMMARY    
