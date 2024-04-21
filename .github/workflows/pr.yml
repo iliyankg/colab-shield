@@ -37,9 +37,9 @@ jobs:
         go test -v ./... | go-junit-report -set-exit-code > report.xml
       
     - name: Test Summary
-      uses: test-summary/action@v2.3
+      uses: dorny/test-reporter@v1.9
       if: ${{ always() }}
       with:
-        paths: |
-          ${{ env.BACKEND_DIRECTORY }}/report.xml
+        name: test-results
+        path: ${{ env.BACKEND_DIRECTORY }}/report.xml
       
