@@ -2,8 +2,9 @@ name: Pull Request Validation
 
 on: 
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+    paths:
+      - 'backend/**/*.go'
 
 jobs:
   test-backend:
@@ -17,7 +18,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22'
+        go-version: ${{ vars.COLAB_SHIELD_GO_VERSOIN }}
 
     - name: Install Report Generator
       if: ${{ success() }}
