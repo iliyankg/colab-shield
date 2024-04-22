@@ -17,7 +17,7 @@
 				"gruntfuggly.todo-tree",
 				"ms-azuretools.vscode-docker",
 				"github.vscode-github-actions",
-				"mhutchie.git-graph"
+				"eamodio.gitlens"
 			],
 			"settings": {
 				"go.toolsManagement.checkForUpdates": "local",
