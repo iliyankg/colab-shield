@@ -34,7 +34,7 @@ func init() {
 
 	rootCmd.AddCommand(releaseCmd)
 	rootCmd.AddCommand(updateCmd)
-	rootCmd.AddCommand(initProjectCmd)
+	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(claimFilesCmd)
 }
