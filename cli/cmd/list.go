@@ -17,6 +17,8 @@ func init() {
 	listCmd.Flags().StringVarP(&pathToList, "path", "p", "", "Path to list files")
 	listCmd.Flags().Uint64VarP(&cursor, "cursor", "c", 0, "Cursor for pagination")
 	listCmd.Flags().Int64VarP(&pageSize, "page-size", "s", 10, "Page size for pagination")
+	
+	rootCmd.AddCommand(listCmd)
 }
 
 var listCmd = &cobra.Command{

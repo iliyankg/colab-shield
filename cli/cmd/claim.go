@@ -20,6 +20,8 @@ func init() {
 
 	claimFilesCmd.Flags().Int32VarP(&claimMode, "mode", "m", int32(protos.ClaimMode_EXCLUSIVE), "claim mode")
 	claimFilesCmd.Flags().BoolVarP(&softClaim, "soft-claim", "s", false, "Soft claim only exposes any files that may get rejected if any. Nothing is saved to the DB")
+
+	rootCmd.AddCommand(claimFilesCmd)
 }
 
 var claimFilesCmd = &cobra.Command{

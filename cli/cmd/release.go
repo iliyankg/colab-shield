@@ -14,6 +14,8 @@ var (
 func init() {
 	claimFilesCmd.Flags().StringArrayVarP(&filesToRelease, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
+
+	rootCmd.AddCommand(releaseCmd)
 }
 
 var releaseCmd = &cobra.Command{

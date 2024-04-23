@@ -15,6 +15,8 @@ var (
 func init() {
 	updateCmd.Flags().StringArrayVarP(&filesToUpdate, "file", "f", []string{}, "files to lock")
 	updateCmd.MarkFlagRequired("file")
+
+	rootCmd.AddCommand(updateCmd)
 }
 
 var updateCmd = &cobra.Command{

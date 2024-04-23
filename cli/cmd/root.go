@@ -31,12 +31,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&gitBranch, "gitBranch", "b", "", "git branch")
 	rootCmd.MarkFlagRequired("gitBranch")
-
-	rootCmd.AddCommand(releaseCmd)
-	rootCmd.AddCommand(updateCmd)
-	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(claimFilesCmd)
 }
 
 // Execute executes the root command.
