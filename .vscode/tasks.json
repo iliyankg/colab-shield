@@ -25,7 +25,10 @@
         {
             "type": "shell",
             "label": "New CLI command",
-            "command": "${workspaceFolder}/cli/tools/add_command.sh ${workspaceFolder}/cli ${input:cliCommandName}",
+            "options": {
+                "cwd": "${workspaceFolder}/cli"
+            },
+            "command": "cobra-cli add ${input:cliCommandName}",
             "group": "none",
             "detail": "creates a new CLI command"
         }

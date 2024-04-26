@@ -2,18 +2,16 @@ package cmd
 
 import (
 	"github.com/iliyankg/colab-shield/cli/client"
+	"github.com/iliyankg/colab-shield/cli/config"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
-var (
-	filesToRelease []string
-)
-
 func init() {
-	claimFilesCmd.Flags().StringArrayVarP(&filesToRelease, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
+
+	rootCmd.AddCommand(releaseCmd)
 }
 
 var releaseCmd = &cobra.Command{
@@ -21,11 +19,11 @@ var releaseCmd = &cobra.Command{
 	Short: "Release file(s) previously claimed.",
 	Long:  `Release file(s) previously claimed.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		payload := newReleaseFilesRequest(filesToRelease)
+		payload := newReleaseFilesRequest(files)
 
-		ctx, cancel := buildContext(gitRepo, gitUser)
+		ctx, cancel := buildContext(config.ProjectId(), gitUser)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(serverAddress)
+		conn, client := client.NewColabShieldClient(config.ServerHost(), config.ServerPortGrpc())
 		defer conn.Close()
 
 		response, err := client.Release(ctx, payload)

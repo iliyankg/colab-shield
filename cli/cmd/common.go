@@ -32,7 +32,7 @@ func newClaimFilesRequest(files []string, hashes []string, claimMode protos.Clai
 		return nil, ErrFileToHashMissmatch
 	}
 
-	claimFileInfos := make([]*protos.ClaimFileInfo, 0, len(filesToClaim))
+	claimFileInfos := make([]*protos.ClaimFileInfo, 0, len(files))
 	for i, file := range files {
 		claimFileInfos = append(claimFileInfos, &protos.ClaimFileInfo{
 			FileId:    file,

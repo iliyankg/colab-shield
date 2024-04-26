@@ -5,19 +5,24 @@ import (
 	"time"
 
 	"github.com/iliyankg/colab-shield/cli/client"
+	"github.com/iliyankg/colab-shield/cli/config"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
-var initProjectCmd = &cobra.Command{
-	Use:   "init-project",
-	Short: "Initializes a project on the backend.",
-	Long:  `Initializes a project on the backend.`,
+func init() {
+	rootCmd.AddCommand(initCmd)
+}
+
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initializes colabshield in the current directory.",
+	Long:  `Initializes colabshield in the current directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(serverAddress)
+		conn, client := client.NewColabShieldClient(config.ServerHost(), config.ServerPortGrpc())
 		defer conn.Close()
 
 		payload := &protos.InitProjectRequest{
