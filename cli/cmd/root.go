@@ -10,6 +10,7 @@ import (
 var (
 	gitUser   string
 	gitBranch string
+	files     []string
 	rootCmd   = &cobra.Command{
 		Use:   "colab-shield",
 		Short: "A CLI tool for colaborative work with hard to merge files.",
@@ -23,6 +24,8 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&gitBranch, "gitBranch", "b", "", "git branch")
 	rootCmd.MarkFlagRequired("gitBranch")
+
+	claimFilesCmd.Flags().StringArrayVarP(&files, "file", "f", []string{}, "files to lock")
 }
 
 // Execute executes the root command.

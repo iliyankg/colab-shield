@@ -9,12 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	filesToUpdate []string
-)
-
 func init() {
-	updateCmd.Flags().StringArrayVarP(&filesToUpdate, "file", "f", []string{}, "files to lock")
 	updateCmd.MarkFlagRequired("file")
 
 	rootCmd.AddCommand(updateCmd)
@@ -25,17 +20,17 @@ var updateCmd = &cobra.Command{
 	Short: "Update claimed files with changes",
 	Long:  `Update claimed files with changes`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hashes, err := gitutils.GetGitBlobHashes(&log.Logger, filesToUpdate)
+		hashes, err := gitutils.GetGitBlobHashes(&log.Logger, files)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
-		headHashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, filesToUpdate)
+		headHashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, files)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git HEAD hashes")
 		}
 
-		payload, err := newUpdateFilesRequest(filesToUpdate, hashes, headHashes)
+		payload, err := newUpdateFilesRequest(files, hashes, headHashes)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}
@@ -61,7 +56,7 @@ func newUpdateFilesRequest(files []string, hashes []string, headHashes []string)
 		return nil, ErrFileToHashMissmatch
 	}
 
-	updateFileInfos := make([]*protos.UpdateFileInfo, 0, len(filesToUpdate))
+	updateFileInfos := make([]*protos.UpdateFileInfo, 0, len(files))
 	for i, file := range files {
 		updateFileInfos = append(updateFileInfos, &protos.UpdateFileInfo{
 			FileId:   file,

@@ -10,13 +10,11 @@ import (
 )
 
 var (
-	filesToClaim []string
-	claimMode    int32
-	softClaim    bool
+	claimMode int32
+	softClaim bool
 )
 
 func init() {
-	claimFilesCmd.Flags().StringArrayVarP(&filesToClaim, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
 
 	claimFilesCmd.Flags().Int32VarP(&claimMode, "mode", "m", int32(protos.ClaimMode_EXCLUSIVE), "claim mode")
@@ -34,14 +32,14 @@ var claimFilesCmd = &cobra.Command{
 			log.Fatal().Msg("Invalid claim mode. Must be 1 (EXCLUSIVE) or 2 (SHARED).")
 		}
 
-		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, filesToClaim)
+		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, files)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
-		log.Info().Msgf("Git hash for files %s: %s", filesToClaim, hashes)
+		log.Info().Msgf("Git hash for files %s: %s", files, hashes)
 
-		payload, err := newClaimFilesRequest(filesToClaim, hashes, protos.ClaimMode(claimMode), softClaim)
+		payload, err := newClaimFilesRequest(files, hashes, protos.ClaimMode(claimMode), softClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}

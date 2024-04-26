@@ -8,12 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	filesToRelease []string
-)
-
 func init() {
-	claimFilesCmd.Flags().StringArrayVarP(&filesToRelease, "file", "f", []string{}, "files to lock")
 	claimFilesCmd.MarkFlagRequired("file")
 
 	rootCmd.AddCommand(releaseCmd)
@@ -24,7 +19,7 @@ var releaseCmd = &cobra.Command{
 	Short: "Release file(s) previously claimed.",
 	Long:  `Release file(s) previously claimed.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		payload := newReleaseFilesRequest(filesToRelease)
+		payload := newReleaseFilesRequest(files)
 
 		ctx, cancel := buildContext(config.ProjectId(), gitUser)
 		defer cancel()
