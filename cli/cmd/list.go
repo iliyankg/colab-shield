@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/iliyankg/colab-shield/cli/client"
+	"github.com/iliyankg/colab-shield/cli/config"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -17,7 +18,7 @@ func init() {
 	listCmd.Flags().StringVarP(&pathToList, "path", "p", "", "Path to list files")
 	listCmd.Flags().Uint64VarP(&cursor, "cursor", "c", 0, "Cursor for pagination")
 	listCmd.Flags().Int64VarP(&pageSize, "page-size", "s", 10, "Page size for pagination")
-	
+
 	rootCmd.AddCommand(listCmd)
 }
 
@@ -37,9 +38,9 @@ var listCmd = &cobra.Command{
 			PageSize:   pageSize,
 		}
 
-		ctx, cancel := buildContext(gitRepo, gitUser)
+		ctx, cancel := buildContext(config.ProjectId(), gitUser)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(serverAddress)
+		conn, client := client.NewColabShieldClient(config.ServerHost(), config.ServerPortGrpc())
 		defer conn.Close()
 
 		response, err := client.ListFiles(ctx, payload)

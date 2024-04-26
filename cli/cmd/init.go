@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/iliyankg/colab-shield/cli/client"
+	"github.com/iliyankg/colab-shield/cli/config"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -21,7 +22,7 @@ var initCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(serverAddress)
+		conn, client := client.NewColabShieldClient(config.ServerHost(), config.ServerPortGrpc())
 		defer conn.Close()
 
 		payload := &protos.InitProjectRequest{

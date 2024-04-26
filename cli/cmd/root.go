@@ -8,11 +8,9 @@ import (
 )
 
 var (
-	serverAddress string
-	gitRepo       string
-	gitUser       string
-	gitBranch     string
-	rootCmd       = &cobra.Command{
+	gitUser   string
+	gitBranch string
+	rootCmd   = &cobra.Command{
 		Use:   "colab-shield",
 		Short: "A CLI tool for colaborative work with hard to merge files.",
 		Long:  `A CLI tool for colaborative work with hard to merge files. It does this by providing an interface to a backend server which tracks file changes and versions.`,
@@ -20,12 +18,6 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&serverAddress, "serverAddress", "s", "localhost:8080", "address of the server")
-	rootCmd.MarkFlagRequired("serverAddress")
-
-	rootCmd.PersistentFlags().StringVarP(&gitRepo, "gitRepo", "r", "", "git repo name")
-	rootCmd.MarkFlagRequired("gitRepo")
-
 	rootCmd.PersistentFlags().StringVarP(&gitUser, "gitUser", "u", "", "git user name")
 	rootCmd.MarkFlagRequired("gitUser")
 

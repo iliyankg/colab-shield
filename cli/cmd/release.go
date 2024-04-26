@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/iliyankg/colab-shield/cli/client"
+	"github.com/iliyankg/colab-shield/cli/config"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -25,9 +26,9 @@ var releaseCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		payload := newReleaseFilesRequest(filesToRelease)
 
-		ctx, cancel := buildContext(gitRepo, gitUser)
+		ctx, cancel := buildContext(config.ProjectId(), gitUser)
 		defer cancel()
-		conn, client := client.NewColabShieldClient(serverAddress)
+		conn, client := client.NewColabShieldClient(config.ServerHost(), config.ServerPortGrpc())
 		defer conn.Close()
 
 		response, err := client.Release(ctx, payload)
