@@ -28,9 +28,13 @@ func ServerPortGrpc() int {
 }
 
 func ProjectId() string {
-	return viper.GetString("projectId")
+	return viper.GetString("project.id")
 }
 
 func Extensions() []string {
 	return viper.GetStringSlice("extensions")
+}
+
+func IgnorePaths() []string {
+	return viper.GetStringSlice("ignore")
 }
