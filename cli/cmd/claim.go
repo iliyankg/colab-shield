@@ -32,14 +32,19 @@ var claimFilesCmd = &cobra.Command{
 			log.Fatal().Msg("Invalid claim mode. Must be 1 (EXCLUSIVE) or 2 (SHARED).")
 		}
 
-		hashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, files)
+		filteredFiles, err := filterToFilesOfInterest(files)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to filter to files of interest")
+		}
+
+		hashes, err := gitutils.GetGitBlobHEADHashes(log.Logger, filteredFiles)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
-		log.Info().Msgf("Git hash for files %s: %s", files, hashes)
+		log.Info().Msgf("Git hash for files %s: %s", filteredFiles, hashes)
 
-		payload, err := newClaimFilesRequest(files, hashes, protos.ClaimMode(claimMode), softClaim)
+		payload, err := newClaimFilesRequest(filteredFiles, hashes, protos.ClaimMode(claimMode), softClaim)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to map files to hash")
 		}

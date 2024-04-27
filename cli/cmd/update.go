@@ -10,8 +10,6 @@ import (
 )
 
 func init() {
-	updateCmd.MarkFlagRequired("file")
-
 	rootCmd.AddCommand(updateCmd)
 }
 
@@ -20,12 +18,17 @@ var updateCmd = &cobra.Command{
 	Short: "Update claimed files with changes",
 	Long:  `Update claimed files with changes`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hashes, err := gitutils.GetGitBlobHashes(&log.Logger, files)
+		files, err := getFilesOfInterestFromStaged()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to get git staged files")
+		}
+
+		hashes, err := gitutils.GetGitBlobHashes(log.Logger, files)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git hashes")
 		}
 
-		headHashes, err := gitutils.GetGitBlobHEADHashes(&log.Logger, files)
+		headHashes, err := gitutils.GetGitBlobHEADHashes(log.Logger, files)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to get git HEAD hashes")
 		}
@@ -49,6 +52,15 @@ var updateCmd = &cobra.Command{
 			log.Fatal().Msg("Failed to update files")
 		}
 	},
+}
+
+func getFilesOfInterestFromStaged() ([]string, error) {
+	allStagedfiles, err := gitutils.GetGitStagedFiles(log.Logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return filterToFilesOfInterest(allStagedfiles)
 }
 
 func newUpdateFilesRequest(files []string, hashes []string, headHashes []string) (*protos.UpdateFilesRequest, error) {

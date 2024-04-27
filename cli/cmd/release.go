@@ -19,7 +19,12 @@ var releaseCmd = &cobra.Command{
 	Short: "Release file(s) previously claimed.",
 	Long:  `Release file(s) previously claimed.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		payload := newReleaseFilesRequest(files)
+		filteredFiles, err := filterToFilesOfInterest(files)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to filter to files of interest")
+		}
+
+		payload := newReleaseFilesRequest(filteredFiles)
 
 		ctx, cancel := buildContext(config.ProjectId(), gitUser)
 		defer cancel()
