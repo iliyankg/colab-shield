@@ -365,7 +365,6 @@ func (x *ListProjectsResponse) GetProjects() []string {
 // ----------------------------------------
 // List files Messages
 // ----------------------------------------
-// TODO: Pagination?
 // https://cloud.google.com/apis/design/design_patterns#list_pagination
 // https://stackoverflow.com/questions/73841025/cursor-pagination-with-redisjson
 type ListFilesRequest struct {
