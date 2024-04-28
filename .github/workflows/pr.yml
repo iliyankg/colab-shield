@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**/*.go'
+      - 'cli/**/*.go'
 
 jobs:
   test-backend:
