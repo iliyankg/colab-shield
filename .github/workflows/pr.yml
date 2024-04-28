@@ -1,6 +1,12 @@
 name: Pull Request Validation
 
 on: 
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'     
+        required: true
+        default: 'info'
   pull_request:
     branches: [ main ]
     paths:
@@ -27,7 +33,7 @@ jobs:
       run: |
         go install github.com/becheran/go-testreport@latest
     
-    - name: Install dependencies
+    - name: Install dependencies Backend
       working-directory: ${{ env.BACKEND_DIRECTORY }}
       if: ${{ success() }}
       run: |
@@ -38,6 +44,12 @@ jobs:
       if: ${{ success() }}
       run: |
         go test ./... -json | go-testreport $GITHUB_STEP_SUMMARY    
+
+    - name: Install dependencies CLI
+      working-directory: ${{ env.CLI_DIRECTORY }}
+      if: ${{ success() }}
+      run: |
+        go mod download
 
     - name: Test CLI
       working-directory: ${{ env.CLI_DIRECTORY }}
