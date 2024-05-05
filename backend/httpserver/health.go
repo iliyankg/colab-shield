@@ -5,14 +5,14 @@ import (
 	"time"
 
 	"github.com/alexliesenfeld/health"
+	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
 
 const version = "0.1.0" // TODO: Get this from the build system
 
-// newHealthChecker builds the health checker for the HTTP server.
-func newHealthChecker(redisClient *redis.Client) health.Checker {
-	return health.NewChecker(
+func newGinHealthHandler(redisClient *redis.Client) gin.HandlerFunc {
+	checker := health.NewChecker(
 		health.WithInfo(map[string]any{
 			"version": version,
 		}),
@@ -24,4 +24,9 @@ func newHealthChecker(redisClient *redis.Client) health.Checker {
 			},
 		}),
 	)
+
+	return func(c *gin.Context) {
+		httpHandler := health.NewHandler(checker)
+		httpHandler(c.Writer, c.Request)
+	}
 }
