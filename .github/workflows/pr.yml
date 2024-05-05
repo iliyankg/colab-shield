@@ -26,7 +26,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: ${{ vars.COLAB_SHIELD_GO_VERSION }}
+        go-version: ${{ vars.COLABSHIELD_GO_VERSION }}
 
     - name: Install Report Generator
       if: ${{ success() }}

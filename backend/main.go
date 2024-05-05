@@ -11,14 +11,14 @@ import (
 )
 
 func main() {
-	viper.BindEnv("COLABSHIELD_PORT")
+	viper.BindEnv("COLABSHIELD_GRPC_PORT")
 	viper.BindEnv("REDIS_HOST")
 	viper.BindEnv("REDIS_PORT")
 	viper.BindEnv("REDIS_PASSWORD")
 
 	log.Info().Msg("Starting server...")
 
-	port := viper.GetInt("COLABSHIELD_PORT")
+	port := viper.GetInt("COLABSHIELD_GRPC_PORT")
 	redisHost := viper.GetString("REDIS_HOST")
 	redisPort := viper.GetInt("REDIS_PORT")
 	redisPassword := viper.GetString("REDIS_PASSWORD")
