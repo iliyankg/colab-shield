@@ -31,10 +31,11 @@ func Serve(port int, redisClient *redis.Client) (*grpc.Server, error) {
 		log.Error().Err(err).Msg("failed to listen")
 		return nil, err
 	}
-	log.Info().Msgf("Listening on port: %d", port)
+	log.Info().Msgf("Grpc listening on port: %d", port)
+
+	redisClient.Ping(context.Background())
 
 	// Serve gRPC server
-	log.Info().Msg("Serving gRPC")
 	err = grpcServer.Serve(lis)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to serve")

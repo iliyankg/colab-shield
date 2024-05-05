@@ -24,6 +24,7 @@ services:
       dockerfile: ./backend/Dockerfile-local-debug
     environment:
       - COLABSHIELD_GRPC_PORT=1337
+      - COLABSHIELD_HTTP_PORT=1338
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=redis
@@ -31,6 +32,7 @@ services:
       - redis
     ports:
       - 1337:1337
+      - 1338:1338
       - 2345:2345
     networks:
       - internal
