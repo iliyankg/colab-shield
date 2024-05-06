@@ -3,7 +3,7 @@ package grpcserver
 import (
 	"errors"
 
-	"github.com/iliyankg/colab-shield/backend/colabom"
+	"github.com/iliyankg/colab-shield/backend/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -11,7 +11,8 @@ import (
 var (
 	// Common status error for rejected files regardless of internal reason.
 	ErrRejectedFiles = status.Error(codes.FailedPrecondition, "rejected files")
-	ErrUnmarshalFail = status.Error(codes.Internal, "failed to unmarshal JSON from Redis hash")
+	ErrMarshalFail   = status.Error(codes.Internal, "failed to marshal JSON")
+	ErrUnmarshalFail = status.Error(codes.Internal, "failed to unmarshal JSON")
 	ErrRedisError    = status.Error(codes.Internal, "encountered an error with Redis")
 	ErrUnknown       = status.Error(codes.Unknown, "unknown error")
 )
@@ -22,11 +23,11 @@ func parseColabomError(err error) error {
 		return nil
 	}
 
-	if errors.Is(err, colabom.ErrUnmarshalFail) {
+	if errors.Is(err, common.ErrUnmarshalFail) {
 		return ErrUnmarshalFail
 	}
 
-	if errors.Is(err, colabom.ErrRedisError) {
+	if errors.Is(err, common.ErrRedisError) {
 		return ErrRedisError
 	}
 
