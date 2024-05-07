@@ -3,7 +3,7 @@ package grpcserver
 import (
 	"errors"
 
-	"github.com/iliyankg/colab-shield/backend/common"
+	"github.com/iliyankg/colab-shield/backend/core"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -17,17 +17,17 @@ var (
 	ErrUnknown       = status.Error(codes.Unknown, "unknown error")
 )
 
-// parseColabomError converts colabom errors to gRPC status errors.
-func parseColabomError(err error) error {
+// parseCoreError converts colabom errors to gRPC status errors.
+func parseCoreError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	if errors.Is(err, common.ErrUnmarshalFail) {
+	if errors.Is(err, core.ErrUnmarshalFail) {
 		return ErrUnmarshalFail
 	}
 
-	if errors.Is(err, common.ErrRedisError) {
+	if errors.Is(err, core.ErrRedisError) {
 		return ErrRedisError
 	}
 

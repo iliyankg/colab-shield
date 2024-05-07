@@ -40,7 +40,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := colabom.GetFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
-			return parseColabomError(err)
+			return parseCoreError(err)
 		}
 
 		if len(rejectedFiles) > 0 {
@@ -53,7 +53,7 @@ func releaseHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client
 			return ErrRejectedFiles
 		}
 
-		return parseColabomError(colabom.SetFileInfos(ctx, logger, tx, keys, files))
+		return parseCoreError(colabom.SetFileInfos(ctx, logger, tx, keys, files))
 	}
 
 	// Execute the watch function

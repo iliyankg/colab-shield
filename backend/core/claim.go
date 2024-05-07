@@ -1,16 +1,16 @@
-package common
+package core
 
 import (
 	"context"
 	"errors"
 
-	"github.com/iliyankg/colab-shield/backend/common/request"
+	"github.com/iliyankg/colab-shield/backend/core/requests"
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *request.Claim) ([]*models.FileInfo, error) {
+func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *requests.Claim) ([]*models.FileInfo, error) {
 	if len(request.Files) == 0 {
 		logger.Warn().Msg("No files to claim")
 		return nil, nil
@@ -67,7 +67,7 @@ func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId 
 	return nil, nil
 }
 
-func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*request.ClaimInfo, outRejectedFiles *[]*models.FileInfo) {
+func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*requests.ClaimInfo, outRejectedFiles *[]*models.FileInfo) {
 	for i := range fileInfos {
 		reqFile := claimRequests[i]
 

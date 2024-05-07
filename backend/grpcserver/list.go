@@ -39,7 +39,7 @@ func listHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _
 
 	files := make([]*models.FileInfo, 0, len(keys))
 	if err := colabom.GetFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
-		return nil, parseColabomError(err)
+		return nil, parseCoreError(err)
 	}
 
 	protoFiles := make([]*protos.FileInfo, 0, len(files))

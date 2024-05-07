@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/iliyankg/colab-shield/backend/common"
-	"github.com/iliyankg/colab-shield/backend/common/request"
+	"github.com/iliyankg/colab-shield/backend/core"
+	"github.com/iliyankg/colab-shield/backend/core/requests"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
@@ -19,14 +19,14 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 		return nil, ErrMarshalFail
 	}
 
-	var internalReq request.Claim
+	var internalReq requests.Claim
 	if err := json.Unmarshal(res, internalReq); err != nil {
 		logger.Error().Err(err).Msg("Failed to unmarshal JSON from Redis hash")
 		return nil, ErrUnmarshalFail
 	}
 
-	rejectedFiles, err := common.Claim(ctx, logger, rc, userId, projectId, &internalReq)
-	parsedErr := parseColabomError(err)
+	rejectedFiles, err := core.Claim(ctx, logger, rc, userId, projectId, &internalReq)
+	parsedErr := parseCoreError(err)
 	if errors.Is(parsedErr, ErrRejectedFiles) {
 		logger.Info().Msg("Claiming failed due to rejected files")
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))

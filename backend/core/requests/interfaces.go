@@ -1,4 +1,4 @@
-package request
+package requests
 
 type FilesRequest interface {
 	GetFilesIds() []string
