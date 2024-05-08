@@ -112,7 +112,6 @@ message UpdateFileInfo {
     string fileId = 1;
     string oldHash = 2;
     string fileHash = 3;
-    string branchName = 4;
 }
 
 message UpdateFilesRequest {

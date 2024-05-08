@@ -27,3 +27,22 @@ type ClaimInfo struct {
 	FileHash  string    `json:"fileHash"`
 	ClaimMode ClaimMode `json:"claimMode"`
 }
+
+type Update struct {
+	BranchName string            `json:"branchName"`
+	Files      []*UpdateFileInfo `json:"files"`
+}
+
+func (u *Update) GetFilesIds() []string {
+	var filesIds []string
+	for _, file := range u.Files {
+		filesIds = append(filesIds, file.FileId)
+	}
+	return filesIds
+}
+
+type UpdateFileInfo struct {
+	FileId   string `json:"fileId"`
+	OldHash  string `json:"oldHash"`
+	FileHash string `json:"fileHash"`
+}
