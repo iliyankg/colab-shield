@@ -7,13 +7,6 @@ import (
 	"github.com/iliyankg/colab-shield/protos"
 )
 
-// Represents a type constraint for FileId field and getter
-// in the respective proto messages. Used for generics.
-type protoFileId interface {
-	*protos.ClaimFileInfo | *protos.UpdateFileInfo
-	GetFileId() string
-}
-
 // userIdFromCtx extracts the user ID from the context
 // userId is required and verified to exist in the UnaryInterceptor
 func userIdFromCtx(ctx context.Context) string {
