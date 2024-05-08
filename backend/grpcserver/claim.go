@@ -20,7 +20,7 @@ func claimHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, 
 	}
 
 	var internalReq requests.Claim
-	if err := json.Unmarshal(res, internalReq); err != nil {
+	if err := json.Unmarshal(res, &internalReq); err != nil {
 		logger.Error().Err(err).Msg("Failed to unmarshal JSON from Redis hash")
 		return nil, ErrUnmarshalFail
 	}
