@@ -17,17 +17,24 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// ColabShieldServer is serves a gRPC endpoint.
 type ColabShieldServer struct {
 	protos.UnimplementedColabShieldServer
 	redisClient *redis.Client
 }
 
-func Serve(port int, redisClient *redis.Client) (*grpc.Server, error) {
+func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
+	return &ColabShieldServer{
+		redisClient: redisClient,
+	}
+}
+
+func (css *ColabShieldServer) Serve(port int) (*grpc.Server, error) {
 	// Create gRPC server
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(UnaryInterceptor),
 	)
-	protos.RegisterColabShieldServer(grpcServer, NewColabShieldServer(redisClient))
+	protos.RegisterColabShieldServer(grpcServer, css)
 
 	// Listen on port
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
@@ -37,7 +44,7 @@ func Serve(port int, redisClient *redis.Client) (*grpc.Server, error) {
 	}
 	log.Info().Msgf("Grpc listening on port: %d", port)
 
-	redisClient.Ping(context.Background())
+	css.redisClient.Ping(context.Background())
 
 	// Serve gRPC server
 	err = grpcServer.Serve(lis)
@@ -47,12 +54,6 @@ func Serve(port int, redisClient *redis.Client) (*grpc.Server, error) {
 	}
 
 	return grpcServer, nil
-}
-
-func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
-	return &ColabShieldServer{
-		redisClient: redisClient,
-	}
 }
 
 func (s *ColabShieldServer) HealthCheck(ctx context.Context, _ *emptypb.Empty) (*protos.HealthCheckResponse, error) {
@@ -111,9 +112,10 @@ func (s *ColabShieldServer) Claim(ctx context.Context, req *protos.ClaimFilesReq
 	}
 
 	rejectedFiles, err := core.Claim(ctx, logger, s.redisClient, userId, projectId, &internalReq)
+
 	parsedErr := parseCoreError(err)
-	if errors.Is(parsedErr, ErrRejectedFiles) {
-		logger.Info().Msg("Claiming failed due to rejected files")
+	switch {
+	case errors.Is(parsedErr, ErrRejectedFiles):
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
 		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
@@ -121,15 +123,13 @@ func (s *ColabShieldServer) Claim(ctx context.Context, req *protos.ClaimFilesReq
 			Status:        protos.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
-	} else if parsedErr != nil {
-		logger.Error().Err(parsedErr).Msg("Failed to claim files")
+	case parsedErr != nil:
 		return nil, parsedErr
+	default:
+		return &protos.ClaimFilesResponse{
+			Status: protos.Status_OK,
+		}, nil
 	}
-
-	// TODO: Consider returning the files that were claimed succesfully
-	return &protos.ClaimFilesResponse{
-		Status: protos.Status_OK,
-	}, nil
 }
 
 func (s *ColabShieldServer) Update(ctx context.Context, req *protos.UpdateFilesRequest) (*protos.UpdateFilesResponse, error) {
@@ -155,8 +155,8 @@ func (s *ColabShieldServer) Update(ctx context.Context, req *protos.UpdateFilesR
 
 	rejectedFiles, err := core.Update(ctx, logger, s.redisClient, userId, projectId, &internalReq)
 	parsedErr := parseCoreError(err)
-	if errors.Is(parsedErr, ErrRejectedFiles) {
-		logger.Info().Msg("Updating failed due to rejected files")
+	switch {
+	case errors.Is(parsedErr, ErrRejectedFiles):
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
 		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
@@ -164,16 +164,13 @@ func (s *ColabShieldServer) Update(ctx context.Context, req *protos.UpdateFilesR
 			Status:        protos.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
-	} else if parsedErr != nil {
-		logger.Error().Err(parsedErr).Msg("Failed to update files")
+	case parsedErr != nil:
 		return nil, parsedErr
+	default:
+		return &protos.UpdateFilesResponse{
+			Status: protos.Status_OK,
+		}, nil
 	}
-
-	logger.Info().Msg("Updating successful")
-
-	return &protos.UpdateFilesResponse{
-		Status: protos.Status_OK,
-	}, nil
 }
 
 func (s *ColabShieldServer) Release(ctx context.Context, request *protos.ReleaseFilesRequest) (*protos.ReleaseFilesResponse, error) {
@@ -185,9 +182,10 @@ func (s *ColabShieldServer) Release(ctx context.Context, request *protos.Release
 	projectId := projectIdFromCtx(ctx)
 
 	rejectedFiles, err := core.Release(ctx, logger, s.redisClient, userId, projectId, request.BranchName, request.FileIds)
+
 	parsedErr := parseCoreError(err)
-	if errors.Is(parsedErr, ErrRejectedFiles) {
-		logger.Info().Msg("Releasing failed due to rejected files")
+	switch {
+	case errors.Is(parsedErr, ErrRejectedFiles):
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
 		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 
@@ -195,14 +193,11 @@ func (s *ColabShieldServer) Release(ctx context.Context, request *protos.Release
 			Status:        protos.Status_REJECTED,
 			RejectedFiles: protoRejectedFiles,
 		}, nil
-	} else if parsedErr != nil {
-		logger.Error().Err(parsedErr).Msg("Failed to release files")
+	case parsedErr != nil:
 		return nil, parsedErr
+	default:
+		return &protos.ReleaseFilesResponse{
+			Status: protos.Status_OK,
+		}, nil
 	}
-
-	logger.Info().Msg("Releasing successful")
-
-	return &protos.ReleaseFilesResponse{
-		Status: protos.Status_OK,
-	}, nil
 }

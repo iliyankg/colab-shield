@@ -37,12 +37,15 @@ func main() {
 
 	group, _ := errgroup.WithContext(context.Background())
 
+	grpcServer := grpcserver.NewColabShieldServer(redisClient)
+	httpServer := httpserver.NewColabShieldServer(redisClient)
+
 	group.Go(func() error {
-		_, err := grpcserver.Serve(grpcPort, redisClient)
+		_, err := grpcServer.Serve(grpcPort)
 		return err
 	})
 	group.Go(func() error {
-		return httpserver.Serve(httpPort, redisClient)
+		return httpServer.Serve(httpPort)
 	})
 
 	if err := group.Wait(); err != nil {
