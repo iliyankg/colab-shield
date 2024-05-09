@@ -52,17 +52,17 @@ func Update(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId
 
 	// Execute the watch function
 	err := rc.Watch(ctx, watchFn, keys...)
-
-	if errors.Is(err, ErrRejectedFiles) {
+	switch {
+	case errors.Is(err, ErrRejectedFiles):
+		logger.Info().Msg("Updating failed due to rejected files")
 		return rejectedFiles, nil
-	} else if err != nil {
+	case err != nil:
 		logger.Error().Err(err).Msg("Failed to update files")
 		return nil, err
+	default:
+		logger.Info().Msg("Updating successful")
+		return nil, nil
 	}
-
-	logger.Info().Msg("Updating successful")
-
-	return nil, nil
 }
 
 func updateFiles(userId string, branchName string, fileInfos []*models.FileInfo, pbFiles []*requests.UpdateFileInfo, outRejectedFiles *[]*models.FileInfo) {

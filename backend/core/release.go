@@ -53,17 +53,17 @@ func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userI
 
 	// Execute the watch function
 	err := rc.Watch(ctx, watchFn, keys...)
-
-	if errors.Is(err, ErrRejectedFiles) {
+	switch {
+	case errors.Is(err, ErrRejectedFiles):
 		logger.Info().Msg("Releasing failed due to rejected files")
 		return rejectedFiles, nil
-	} else if err != nil {
+	case err != nil:
 		logger.Error().Err(err).Msg("Failed to release files")
 		return nil, err
+	default:
+		logger.Info().Msg("Releasing successful")
+		return nil, nil
 	}
-
-	logger.Info().Msg("Releasing successful")
-	return nil, nil
 }
 
 func releaseFiles(userId string, fileInfos []*models.FileInfo, outRejectedFiles *[]*models.FileInfo) {

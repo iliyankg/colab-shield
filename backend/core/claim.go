@@ -52,19 +52,17 @@ func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId 
 
 	// Execute the watch function
 	err := rc.Watch(ctx, watchFn, keys...)
-
-	if errors.Is(err, ErrRejectedFiles) {
+	switch {
+	case errors.Is(err, ErrRejectedFiles):
 		logger.Info().Msg("Claiming failed due to rejected files")
 		return rejectedFiles, nil
-	} else if err != nil {
+	case err != nil:
 		logger.Error().Err(err).Msg("Failed to claim files")
 		return nil, err
+	default:
+		logger.Info().Msg("Claiming successful")
+		return nil, nil
 	}
-
-	logger.Info().Msg("Claiming successful")
-
-	// TODO: Consider returning the files that were claimed succesfully
-	return nil, nil
 }
 
 func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*requests.ClaimInfo, outRejectedFiles *[]*models.FileInfo) {
