@@ -17,8 +17,8 @@ var (
 	ErrUnknown       = status.Error(codes.Unknown, "unknown error")
 )
 
-// parseCoreError converts colabom errors to gRPC status errors.
-func parseCoreError(err error) error {
+// parseCoreErrorToGrpc converts colabom errors to gRPC status errors.
+func parseCoreErrorToGrpc(err error) error {
 	if err == nil {
 		return nil
 	}

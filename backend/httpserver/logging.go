@@ -9,8 +9,8 @@ import (
 const LoggerKeyCtxKey = "logger"
 
 // getLogger returns the logger from the context.
-func getLogger(c *gin.Context) *zerolog.Logger {
-	return c.MustGet(LoggerKeyCtxKey).(*zerolog.Logger)
+func getLogger(ctx *gin.Context) *zerolog.Logger {
+	return ctx.MustGet(LoggerKeyCtxKey).(*zerolog.Logger)
 }
 
 // createGinLoggingHandler returns a new gin middleware that logs requests.

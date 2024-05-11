@@ -79,7 +79,7 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *protos.ListF
 
 	files, cursor, err := core.List(ctx, logger, s.redisClient, projectId, request.Cursor, request.PageSize, request.FolderPath)
 	if err != nil {
-		return nil, parseCoreError(err)
+		return nil, parseCoreErrorToGrpc(err)
 	}
 
 	protoFiles := make([]*protos.FileInfo, 0, len(files))
@@ -113,7 +113,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, req *protos.ClaimFilesReq
 
 	rejectedFiles, err := core.Claim(ctx, logger, s.redisClient, userId, projectId, &internalReq)
 
-	parsedErr := parseCoreError(err)
+	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
 	case errors.Is(parsedErr, ErrRejectedFiles):
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
@@ -154,7 +154,7 @@ func (s *ColabShieldServer) Update(ctx context.Context, req *protos.UpdateFilesR
 	}
 
 	rejectedFiles, err := core.Update(ctx, logger, s.redisClient, userId, projectId, &internalReq)
-	parsedErr := parseCoreError(err)
+	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
 	case errors.Is(parsedErr, ErrRejectedFiles):
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))
@@ -183,7 +183,7 @@ func (s *ColabShieldServer) Release(ctx context.Context, request *protos.Release
 
 	rejectedFiles, err := core.Release(ctx, logger, s.redisClient, userId, projectId, request.BranchName, request.FileIds)
 
-	parsedErr := parseCoreError(err)
+	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
 	case errors.Is(parsedErr, ErrRejectedFiles):
 		protoRejectedFiles := make([]*protos.FileInfo, 0, len(rejectedFiles))

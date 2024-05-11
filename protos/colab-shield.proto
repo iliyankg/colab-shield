@@ -32,7 +32,7 @@ service ColabShield {
     rpc InitProject(InitProjectRequest) returns (InitProjectResponse) {}
     rpc ListProjects(google.protobuf.Empty) returns (ListProjectsResponse) {}
     
-
+    // TODO: Look into gRPC transcoding instead of using Gin.
     rpc Claim(ClaimFilesRequest) returns (ClaimFilesResponse) {}
     rpc Update(UpdateFilesRequest) returns (UpdateFilesResponse) {}
     rpc Release(ReleaseFilesRequest) returns (ReleaseFilesResponse) {}
