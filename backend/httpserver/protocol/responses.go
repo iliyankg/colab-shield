@@ -1,5 +1,6 @@
-package httpserver
+package protocol
 
+// ClaimMode is the mode in which a file is claimed
 type ClaimMode int32
 
 const (
@@ -8,6 +9,7 @@ const (
 	SHARED    ClaimMode = 2
 )
 
+// RejectReason is the reason a claim was rejected
 type RejectReason int32
 
 const (
@@ -19,6 +21,7 @@ const (
 	MISSING            RejectReason = 5
 )
 
+// FileInfo represents the information sent to the client about a file
 type FileInfo struct {
 	FileId       string       `json:"fileId"`
 	FileHash     string       `json:"fileHash"`

@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/iliyankg/colab-shield/backend/core"
+	"github.com/iliyankg/colab-shield/backend/httpserver/protocol"
 	"github.com/rs/zerolog/log"
 
 	"github.com/redis/go-redis/v9"
@@ -109,7 +110,7 @@ func (css *ColabShieldServer) listHandler(ctx *gin.Context) {
 		return
 	}
 
-	protoFiles := make([]*FileInfo, 0, len(files))
+	protoFiles := make([]*protocol.FileInfo, 0, len(files))
 	fileInfosToProto(files, &protoFiles)
 	ctx.JSON(200, gin.H{
 		"nextCursor": cursor,
