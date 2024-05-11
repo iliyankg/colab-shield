@@ -37,6 +37,7 @@ type ColabShieldClient interface {
 	HealthCheck(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 	InitProject(ctx context.Context, in *InitProjectRequest, opts ...grpc.CallOption) (*InitProjectResponse, error)
 	ListProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListProjectsResponse, error)
+	// TODO: Look into gRPC transcoding instead of using Gin.
 	Claim(ctx context.Context, in *ClaimFilesRequest, opts ...grpc.CallOption) (*ClaimFilesResponse, error)
 	Update(ctx context.Context, in *UpdateFilesRequest, opts ...grpc.CallOption) (*UpdateFilesResponse, error)
 	Release(ctx context.Context, in *ReleaseFilesRequest, opts ...grpc.CallOption) (*ReleaseFilesResponse, error)
@@ -131,6 +132,7 @@ type ColabShieldServer interface {
 	HealthCheck(context.Context, *emptypb.Empty) (*HealthCheckResponse, error)
 	InitProject(context.Context, *InitProjectRequest) (*InitProjectResponse, error)
 	ListProjects(context.Context, *emptypb.Empty) (*ListProjectsResponse, error)
+	// TODO: Look into gRPC transcoding instead of using Gin.
 	Claim(context.Context, *ClaimFilesRequest) (*ClaimFilesResponse, error)
 	Update(context.Context, *UpdateFilesRequest) (*UpdateFilesResponse, error)
 	Release(context.Context, *ReleaseFilesRequest) (*ReleaseFilesResponse, error)
