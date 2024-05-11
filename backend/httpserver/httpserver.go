@@ -83,7 +83,7 @@ func (css *ColabShieldServer) listHandler(ctx *gin.Context) {
 	logger := getLogger(ctx)
 
 	// TODO: Validate projectId with DB.
-	projectId := ctx.Param("projectId")[1 : len(ctx.Param("projectId"))-1] // first and last as they are '/'
+	projectId := ctx.Param("projectId")
 
 	cursor, err := strconv.ParseUint(ctx.Query("cursor"), 10, 64)
 	if err != nil {
@@ -101,7 +101,7 @@ func (css *ColabShieldServer) listHandler(ctx *gin.Context) {
 		pathStr = string(path)
 	}
 
-	files, cursor, err := core.List(ctx, *logger, css.redisClient, projectId, cursor, pageSize, pathStr)
+	files, cursor, err := core.List(ctx, logger, css.redisClient, projectId, cursor, pageSize, pathStr)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"error": err.Error(),
