@@ -56,7 +56,7 @@ func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userI
 	switch {
 	case errors.Is(err, ErrRejectedFiles):
 		logger.Info().Msg("Releasing failed due to rejected files")
-		return rejectedFiles, nil
+		return rejectedFiles, err
 	case err != nil:
 		logger.Error().Err(err).Msg("Failed to release files")
 		return nil, err

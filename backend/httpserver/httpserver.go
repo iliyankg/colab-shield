@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iliyankg/colab-shield/backend/core"
 	"github.com/iliyankg/colab-shield/backend/httpserver/protocol"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/redis/go-redis/v9"
@@ -81,7 +80,7 @@ func (css *ColabShieldServer) claimHandler(ctx *gin.Context) {
 	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
 	userId := ctx.GetString("userId")
 
-	logger := zerolog.Ctx(ctx).
+	logger := getLogger(ctx).
 		With().
 		Str("projectId", projectId).
 		Str("branchName", ctx.Query("branchName")).
@@ -109,7 +108,7 @@ func (css *ColabShieldServer) claimHandler(ctx *gin.Context) {
 			"error": err.Error(),
 		})
 	default:
-		ctx.JSON(200, gin.H{})
+		ctx.Status(200)
 	}
 }
 
@@ -117,7 +116,7 @@ func (css *ColabShieldServer) updateHandler(ctx *gin.Context) {
 	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
 	userId := ctx.GetString("userId")
 
-	logger := zerolog.Ctx(ctx).
+	logger := getLogger(ctx).
 		With().
 		Str("projectId", projectId).
 		Str("branchName", ctx.Query("branchName")).
@@ -145,7 +144,7 @@ func (css *ColabShieldServer) updateHandler(ctx *gin.Context) {
 			"error": err.Error(),
 		})
 	default:
-		ctx.JSON(200, gin.H{})
+		ctx.Status(200)
 	}
 }
 
@@ -153,7 +152,7 @@ func (css *ColabShieldServer) releaseHandler(ctx *gin.Context) {
 	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
 	userId := ctx.GetString("userId")
 
-	logger := zerolog.Ctx(ctx).
+	logger := getLogger(ctx).
 		With().
 		Str("projectId", projectId).
 		Str("branchName", ctx.Query("branchName")).
@@ -180,14 +179,14 @@ func (css *ColabShieldServer) releaseHandler(ctx *gin.Context) {
 			"error": err.Error(),
 		})
 	default:
-		ctx.JSON(200, gin.H{})
+		ctx.Status(200)
 	}
 }
 
 func (css *ColabShieldServer) listHandler(ctx *gin.Context) {
 	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
 
-	logger := zerolog.Ctx(ctx).
+	logger := getLogger(ctx).
 		With().
 		Str("projectId", projectId).
 		Str("branchName", ctx.Query("branchName")).

@@ -22,12 +22,12 @@ func fileInfosToProto(fileInfos []*models.FileInfo, outTarget *[]*protocol.FileI
 
 func newCoreClaimRequest(claimRequest *protocol.Claim) *requests.Claim {
 	files := make([]*requests.ClaimFileInfo, 0, len(claimRequest.Files))
-	for i, file := range claimRequest.Files {
-		files[i] = &requests.ClaimFileInfo{
+	for _, file := range claimRequest.Files {
+		files = append(files, &requests.ClaimFileInfo{
 			FileId:    file.FileId,
 			FileHash:  file.FileHash,
 			ClaimMode: requests.ClaimMode(file.ClaimMode),
-		}
+		})
 	}
 	return &requests.Claim{
 		BranchName: claimRequest.BranchName,
@@ -38,11 +38,11 @@ func newCoreClaimRequest(claimRequest *protocol.Claim) *requests.Claim {
 
 func newCoreUpdateRequest(claimRequest *protocol.Update) *requests.Update {
 	files := make([]*requests.UpdateFileInfo, 0, len(claimRequest.Files))
-	for i, file := range claimRequest.Files {
-		files[i] = &requests.UpdateFileInfo{
+	for _, file := range claimRequest.Files {
+		files = append(files, &requests.UpdateFileInfo{
 			FileId:   file.FileId,
 			FileHash: file.FileHash,
-		}
+		})
 	}
 	return &requests.Update{
 		BranchName: claimRequest.BranchName,

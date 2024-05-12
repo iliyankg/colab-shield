@@ -55,7 +55,7 @@ func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId 
 	switch {
 	case errors.Is(err, ErrRejectedFiles):
 		logger.Info().Msg("Claiming failed due to rejected files")
-		return rejectedFiles, nil
+		return rejectedFiles, err
 	case err != nil:
 		logger.Error().Err(err).Msg("Failed to claim files")
 		return nil, err
