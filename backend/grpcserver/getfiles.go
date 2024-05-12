@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// C
 func getFilesHandler(ctx context.Context, logger zerolog.Logger, rc *redis.Client, _ string, projectId string, request *protos.GetFilesRequest) (*protos.GetFilesResponse, error) {
 	files, err := core.GetFiles(ctx, logger, rc, projectId, request.FileIds)
 	if err != nil {

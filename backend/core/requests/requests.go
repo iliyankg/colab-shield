@@ -54,6 +54,7 @@ func (u *Update) GetFilesIds() []string {
 	return filesIds
 }
 
+// UpdateFileInfo contains the information needed to update a file
 type UpdateFileInfo struct {
 	FileId   string `json:"fileId"`
 	OldHash  string `json:"oldHash"`
