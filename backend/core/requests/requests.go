@@ -17,9 +17,9 @@ const (
 // Claim is a request to claim files
 // Implements FileRequests interface
 type Claim struct {
-	SoftClaim  bool         `json:"softClaim"`
-	BranchName string       `json:"branchName"`
-	Files      []*ClaimInfo `json:"files"`
+	SoftClaim  bool             `json:"softClaim"`
+	BranchName string           `json:"branchName"`
+	Files      []*ClaimFileInfo `json:"files"`
 }
 
 // GetFilesIds returns the file IDs from the request
@@ -31,8 +31,8 @@ func (c *Claim) GetFilesIds() []string {
 	return filesIds
 }
 
-// ClaimInfo contains the information needed to claim a file
-type ClaimInfo struct {
+// ClaimFileInfo contains the information needed to claim a file
+type ClaimFileInfo struct {
 	FileId    string    `json:"fileId"`
 	FileHash  string    `json:"fileHash"`
 	ClaimMode ClaimMode `json:"claimMode"`

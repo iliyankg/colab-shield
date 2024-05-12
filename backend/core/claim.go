@@ -65,7 +65,7 @@ func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId 
 	}
 }
 
-func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*requests.ClaimInfo, outRejectedFiles *[]*models.FileInfo) {
+func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*requests.ClaimFileInfo, outRejectedFiles *[]*models.FileInfo) {
 	for i := range fileInfos {
 		reqFile := claimRequests[i]
 

@@ -95,3 +95,9 @@ func (u *Update) GetFilesIds() []string {
 	}
 	return filesIds
 }
+
+// Release is a request to release files
+type Release struct {
+	BranchName string   `json:"branchName"`
+	FileIds    []string `json:"fileIds"`
+}

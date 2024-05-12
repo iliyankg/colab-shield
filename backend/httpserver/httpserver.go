@@ -3,6 +3,8 @@ package httpserver
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iliyankg/colab-shield/backend/core"
 	"github.com/iliyankg/colab-shield/backend/httpserver/protocol"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/redis/go-redis/v9"
@@ -28,7 +31,7 @@ type ColabShieldServer struct {
 func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
 	ginEngine := gin.New()
 	ginEngine.Use(requestid.New())
-	ginEngine.Use(createGinLoggingHandler())
+	ginEngine.Use(zerologGinHandler())
 	ginEngine.Use(gin.Recovery())
 
 	return &ColabShieldServer{
@@ -39,10 +42,16 @@ func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
 
 func (css *ColabShieldServer) Serve(port int) error {
 	css.ginEngine.GET("/health", css.createHealthHandler())
-	css.ginEngine.GET("/project/:projectId/files", css.listHandler)
-	css.ginEngine.POST("/project/:projectId/files/claim", css.claimHandler)
-	css.ginEngine.PATCH("/project/:projectId/files/update", css.updateHandler)
-	css.ginEngine.PATCH("/project/:projectId/files/release", css.releaseHandler)
+
+	private := css.ginEngine.Group("/project")
+	private.Use(annonAuthHandler()) // FIXME: Should not be using annon auth.
+	private.Use(zerologAuthRequestHandler())
+	{
+		private.GET("/:projectId/files", css.listHandler)
+		private.POST("/:projectId/files/claim", css.claimHandler)
+		private.PATCH("/:projectId/files/update", css.updateHandler)
+		private.PATCH("/:projectId/files/release", css.releaseHandler)
+	}
 
 	log.Info().Msgf("Http listening on port: %d", port)
 	return css.ginEngine.Run(fmt.Sprintf("0.0.0.0:%d", port))
@@ -69,22 +78,120 @@ func (css *ColabShieldServer) createHealthHandler() gin.HandlerFunc {
 }
 
 func (css *ColabShieldServer) claimHandler(ctx *gin.Context) {
-	// TODO: Implement
+	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
+	userId := ctx.GetString("userId")
+
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("projectId", projectId).
+		Str("branchName", ctx.Query("branchName")).
+		Logger()
+
+	// TODO: Look into binding.
+	var protoRequest protocol.Claim
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&protoRequest); err != nil {
+		logger.Error().Err(err).Msg("Failed to unmarshal JSON from request body")
+		ctx.JSON(400, gin.H{
+			"error": "Failed to unmarshal JSON from request body",
+		})
+		return
+	}
+
+	coreReq := newCoreClaimRequest(&protoRequest)
+	rejectedFiles, err := core.Claim(ctx, logger, css.redisClient, userId, projectId, coreReq)
+	switch {
+	case errors.Is(err, core.ErrRejectedFiles):
+		protoRejectedFiles := make([]*protocol.FileInfo, 0, len(rejectedFiles))
+		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
+		ctx.JSON(409, protoRejectedFiles) // 409 Conflict
+	case err != nil:
+		ctx.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	default:
+		ctx.JSON(200, gin.H{})
+	}
 }
 
 func (css *ColabShieldServer) updateHandler(ctx *gin.Context) {
-	// TODO: Implement
+	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
+	userId := ctx.GetString("userId")
+
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("projectId", projectId).
+		Str("branchName", ctx.Query("branchName")).
+		Logger()
+
+	// TODO: Look into binding
+	var protoRequest protocol.Update
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&protoRequest); err != nil {
+		logger.Error().Err(err).Msg("Failed to unmarshal JSON from request body")
+		ctx.JSON(400, gin.H{
+			"error": "Failed to unmarshal JSON from request body",
+		})
+		return
+	}
+
+	coreReq := newCoreUpdateRequest(&protoRequest)
+	rejectedFiles, err := core.Update(ctx, logger, css.redisClient, userId, projectId, coreReq)
+	switch {
+	case errors.Is(err, core.ErrRejectedFiles):
+		protoRejectedFiles := make([]*protocol.FileInfo, 0, len(rejectedFiles))
+		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
+		ctx.JSON(409, protoRejectedFiles) // 409 Conflict
+	case err != nil:
+		ctx.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	default:
+		ctx.JSON(200, gin.H{})
+	}
 }
 
 func (css *ColabShieldServer) releaseHandler(ctx *gin.Context) {
-	// TODO: Implement
+	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
+	userId := ctx.GetString("userId")
+
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("projectId", projectId).
+		Str("branchName", ctx.Query("branchName")).
+		Logger()
+
+	body := ctx.Request.Body
+	var protoRequest protocol.Release
+	if err := json.NewDecoder(body).Decode(&protoRequest); err != nil {
+		logger.Error().Err(err).Msg("Failed to unmarshal JSON from request body")
+		ctx.JSON(400, gin.H{
+			"error": "Failed to unmarshal JSON from request body",
+		})
+		return
+	}
+
+	rejectedFiles, err := core.Release(ctx, logger, css.redisClient, userId, projectId, protoRequest.BranchName, protoRequest.FileIds)
+	switch {
+	case errors.Is(err, core.ErrRejectedFiles):
+		protoRejectedFiles := make([]*protocol.FileInfo, 0, len(rejectedFiles))
+		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
+		ctx.JSON(409, protoRejectedFiles) // 409 Conflict
+	case err != nil:
+		ctx.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	default:
+		ctx.JSON(200, gin.H{})
+	}
 }
 
 func (css *ColabShieldServer) listHandler(ctx *gin.Context) {
-	logger := getLogger(ctx)
+	projectId := ctx.Param("projectId") // TODO: Validate projectId with DB.
 
-	// TODO: Validate projectId with DB.
-	projectId := ctx.Param("projectId")
+	logger := zerolog.Ctx(ctx).
+		With().
+		Str("projectId", projectId).
+		Str("branchName", ctx.Query("branchName")).
+		Logger()
 
 	cursor, err := strconv.ParseUint(ctx.Query("cursor"), 10, 64)
 	if err != nil {

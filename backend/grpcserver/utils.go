@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 
+	"github.com/iliyankg/colab-shield/backend/core/requests"
 	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/iliyankg/colab-shield/protos"
 )
@@ -35,5 +36,35 @@ func toProto(fi *models.FileInfo) *protos.FileInfo {
 		BranchName:   fi.BranchName,
 		ClaimMode:    protos.ClaimMode(fi.ClaimMode),
 		RejectReason: protos.RejectReason(fi.RejectReason),
+	}
+}
+
+func newCoreClaimRequest(claimRequest *protos.ClaimFilesRequest) *requests.Claim {
+	files := make([]*requests.ClaimFileInfo, 0, len(claimRequest.Files))
+	for i, file := range claimRequest.Files {
+		files[i] = &requests.ClaimFileInfo{
+			FileId:    file.FileId,
+			FileHash:  file.FileHash,
+			ClaimMode: requests.ClaimMode(file.ClaimMode),
+		}
+	}
+	return &requests.Claim{
+		BranchName: claimRequest.BranchName,
+		SoftClaim:  claimRequest.SoftClaim,
+		Files:      files,
+	}
+}
+
+func newCoreUpdateRequest(claimRequest *protos.UpdateFilesRequest) *requests.Update {
+	files := make([]*requests.UpdateFileInfo, 0, len(claimRequest.Files))
+	for i, file := range claimRequest.Files {
+		files[i] = &requests.UpdateFileInfo{
+			FileId:   file.FileId,
+			FileHash: file.FileHash,
+		}
+	}
+	return &requests.Update{
+		BranchName: claimRequest.BranchName,
+		Files:      files,
 	}
 }

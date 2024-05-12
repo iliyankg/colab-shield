@@ -2,13 +2,11 @@ package grpcserver
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 
 	"github.com/iliyankg/colab-shield/backend/core"
-	"github.com/iliyankg/colab-shield/backend/core/requests"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
@@ -98,20 +96,9 @@ func (s *ColabShieldServer) Claim(ctx context.Context, req *protos.ClaimFilesReq
 
 	userId := userIdFromCtx(ctx)
 	projectId := projectIdFromCtx(ctx)
+	coreReq := newCoreClaimRequest(req)
 
-	res, err := json.Marshal(req)
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to marshal JSON from Redis hash")
-		return nil, ErrMarshalFail
-	}
-
-	var internalReq requests.Claim
-	if err := json.Unmarshal(res, &internalReq); err != nil {
-		logger.Error().Err(err).Msg("Failed to unmarshal JSON from Redis hash")
-		return nil, ErrUnmarshalFail
-	}
-
-	rejectedFiles, err := core.Claim(ctx, logger, s.redisClient, userId, projectId, &internalReq)
+	rejectedFiles, err := core.Claim(ctx, logger, s.redisClient, userId, projectId, coreReq)
 
 	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
@@ -140,20 +127,9 @@ func (s *ColabShieldServer) Update(ctx context.Context, req *protos.UpdateFilesR
 
 	userId := userIdFromCtx(ctx)
 	projectId := projectIdFromCtx(ctx)
+	coreReq := newCoreUpdateRequest(req)
 
-	res, err := json.Marshal(req)
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to marshal JSON from Redis hash")
-		return nil, ErrMarshalFail
-	}
-
-	var internalReq requests.Update
-	if err := json.Unmarshal(res, &internalReq); err != nil {
-		logger.Error().Err(err).Msg("Failed to unmarshal JSON from Redis hash")
-		return nil, ErrUnmarshalFail
-	}
-
-	rejectedFiles, err := core.Update(ctx, logger, s.redisClient, userId, projectId, &internalReq)
+	rejectedFiles, err := core.Update(ctx, logger, s.redisClient, userId, projectId, coreReq)
 	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
 	case errors.Is(parsedErr, ErrRejectedFiles):
