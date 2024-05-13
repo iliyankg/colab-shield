@@ -128,7 +128,7 @@ func (fi *FileInfo) Claim(userId string, fileHash string, claimMode ClaimMode) e
 }
 
 // Update updates the file hash for a file only if the user is an owner
-func (fi *FileInfo) Update(userId string, oldHash string, fileHash string, branchName string) error {
+func (fi *FileInfo) Update(userId string, branchName string, oldHash string, fileHash string) error {
 	if !fi.CheckOwner(userId) {
 		return fi.userNotOwner()
 	}

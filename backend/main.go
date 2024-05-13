@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/iliyankg/colab-shield/backend/core"
 	"github.com/iliyankg/colab-shield/backend/grpcserver"
 	"github.com/iliyankg/colab-shield/backend/httpserver"
 )
@@ -35,9 +36,11 @@ func main() {
 		DB:       0,
 	})
 
+	colabDatabase := core.NewRedisDatabase(redisClient)
+
 	group, _ := errgroup.WithContext(context.Background())
 
-	grpcServer := grpcserver.NewColabShieldServer(redisClient)
+	grpcServer := grpcserver.NewColabShieldServer(colabDatabase)
 	httpServer := httpserver.NewColabShieldServer(redisClient)
 
 	group.Go(func() error {

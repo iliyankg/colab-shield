@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/iliyankg/colab-shield/backend/core/requests"
+	"github.com/iliyankg/colab-shield/backend/domain"
 )
 
 // buildRedisKeyForFile builds the Redis key for the given project and file IDs
@@ -13,8 +13,8 @@ func buildRedisKeyForFile(projectId string, fileId string) string {
 
 // keysFromFileRequests extracts the file IDs from the given file requests
 // and builds the Redis keys for them
-func keysFromFileRequests(projectId string, filesRequest requests.FilesRequest, outKeys *[]string) {
-	for _, fileId := range filesRequest.GetFilesIds() {
+func keysFromFileRequests(projectId string, filesRequest domain.FilesRequest, outKeys *[]string) {
+	for _, fileId := range filesRequest.GetFileIDs() {
 		*outKeys = append(*outKeys, buildRedisKeyForFile(projectId, fileId))
 	}
 }

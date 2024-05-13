@@ -39,7 +39,7 @@ func toProto(fi *domain.FileInfo) *protos.FileInfo {
 	}
 }
 
-func newCoreClaimRequest(claimRequest *protos.ClaimFilesRequest) *requests.Claim {
+func newCoreClaimRequest(claimRequest *protos.ClaimFilesRequest) domain.ClaimRequest {
 	files := make([]*requests.ClaimFileInfo, 0, len(claimRequest.Files))
 	for i, file := range claimRequest.Files {
 		files[i] = &requests.ClaimFileInfo{
@@ -55,7 +55,7 @@ func newCoreClaimRequest(claimRequest *protos.ClaimFilesRequest) *requests.Claim
 	}
 }
 
-func newCoreUpdateRequest(claimRequest *protos.UpdateFilesRequest) *requests.Update {
+func newCoreUpdateRequest(claimRequest *protos.UpdateFilesRequest) *domain.UpdateRequest {
 	files := make([]*requests.UpdateFileInfo, 0, len(claimRequest.Files))
 	for i, file := range claimRequest.Files {
 		files[i] = &requests.UpdateFileInfo{

@@ -7,8 +7,8 @@ import (
 	"net"
 
 	"github.com/iliyankg/colab-shield/backend/core"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/iliyankg/colab-shield/protos"
-	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -18,12 +18,12 @@ import (
 // ColabShieldServer is serves a gRPC endpoint.
 type ColabShieldServer struct {
 	protos.UnimplementedColabShieldServer
-	redisClient *redis.Client
+	db domain.ColabDatabase
 }
 
-func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
+func NewColabShieldServer(db domain.ColabDatabase) *ColabShieldServer {
 	return &ColabShieldServer{
-		redisClient: redisClient,
+		db: db,
 	}
 }
 
@@ -42,7 +42,9 @@ func (css *ColabShieldServer) Serve(port int) (*grpc.Server, error) {
 	}
 	log.Info().Msgf("Grpc listening on port: %d", port)
 
-	css.redisClient.Ping(context.Background())
+	if err := css.db.Ping(); err != nil {
+		return nil, err
+	}
 
 	// Serve gRPC server
 	err = grpcServer.Serve(lis)
@@ -75,7 +77,7 @@ func (s *ColabShieldServer) ListFiles(ctx context.Context, request *protos.ListF
 
 	projectId := projectIdFromCtx(ctx)
 
-	files, cursor, err := core.List(ctx, logger, s.redisClient, projectId, request.Cursor, request.PageSize, request.FolderPath)
+	files, cursor, err := s.db.List(ctx, logger, projectId, request.Cursor, request.PageSize, request.FolderPath)
 	if err != nil {
 		return nil, parseCoreErrorToGrpc(err)
 	}
@@ -98,7 +100,7 @@ func (s *ColabShieldServer) Claim(ctx context.Context, req *protos.ClaimFilesReq
 	projectId := projectIdFromCtx(ctx)
 	coreReq := newCoreClaimRequest(req)
 
-	rejectedFiles, err := core.Claim(ctx, logger, s.redisClient, userId, projectId, coreReq)
+	rejectedFiles, err := s.db.Claim(ctx, logger, userId, projectId, req)
 
 	parsedErr := parseCoreErrorToGrpc(err)
 	switch {

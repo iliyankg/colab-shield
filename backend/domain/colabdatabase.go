@@ -22,25 +22,26 @@ type FileUpdate interface {
 // UpdateRequest is an interface for requests that files be updated.
 type UpdateRequest interface {
 	GetBranchName() string
-	GetFiles() []FileUpdate
+	GetRequests() []FileUpdate
 }
 
 // FileClaim is an interface on how a file should be claimed.
 type FileClaim interface {
 	GetFileId() string
 	GetFileHash() string
-	GetClaimMode() int32
+	GetClaimMode() ClaimMode
 }
 
 // ClaimRequest is an interface for requests that claim files.
 type ClaimRequest interface {
 	GetBranchName() string
 	GetSoftClaim() bool
-	GetFiles() []FileClaim
+	GetRequests() []FileClaim
 }
 
 // ColabDatabase is the interface for the database allowing for efficient interactions with the database.
 type ColabDatabase interface {
+	Ping() error
 	List(ctx context.Context, logger zerolog.Logger, projectId string, cursor uint64, pageSize int64, folderPath string) ([]*FileInfo, uint64, error)
 	Claim(ctx context.Context, logger zerolog.Logger, userId string, projectId string, request ClaimRequest) ([]*FileInfo, error)
 	Update(ctx context.Context, logger zerolog.Logger, userId string, projectId string, request UpdateRequest) ([]*FileInfo, error)
