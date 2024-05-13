@@ -1,6 +1,6 @@
 package protocol
 
-import "github.com/iliyankg/colab-shield/backend/models"
+import "github.com/iliyankg/colab-shield/backend/domain"
 
 // FilesRequest is an interface for requests that contain files
 type FilesRequest interface {
@@ -38,7 +38,7 @@ type FileInfo struct {
 	RejectReason RejectReason `json:"rejectReason"`
 }
 
-func NewFileInfoFromModel(fi *models.FileInfo) *FileInfo {
+func NewFileInfoFromModel(fi *domain.FileInfo) *FileInfo {
 	return &FileInfo{
 		FileId:       fi.FileId,
 		FileHash:     fi.FileHash,

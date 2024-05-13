@@ -3,12 +3,12 @@ package core
 import (
 	"context"
 
-	"github.com/iliyankg/colab-shield/backend/models"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func GetFiles(ctx context.Context, logger zerolog.Logger, rc *redis.Client, projectId string, fileIds []string) ([]*models.FileInfo, error) {
+func GetFiles(ctx context.Context, logger zerolog.Logger, rc *redis.Client, projectId string, fileIds []string) ([]*domain.FileInfo, error) {
 	if len(fileIds) == 0 {
 		logger.Warn().Msg("No files to update")
 		return nil, nil
@@ -22,11 +22,11 @@ func GetFiles(ctx context.Context, logger zerolog.Logger, rc *redis.Client, proj
 	}
 
 	// Handler for missing files in the Redis hash
-	missingFileHandler := func(idx int) *models.FileInfo {
-		return models.NewMissingFileInfo(fileIds[idx])
+	missingFileHandler := func(idx int) *domain.FileInfo {
+		return domain.NewMissingFileInfo(fileIds[idx])
 	}
 
-	files := make([]*models.FileInfo, 0, len(fileIds))
+	files := make([]*domain.FileInfo, 0, len(fileIds))
 	if err := getFileInfos(ctx, logger, rc, keys, missingFileHandler, &files); err != nil {
 		return nil, err
 	}

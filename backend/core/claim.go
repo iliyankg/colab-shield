@@ -5,12 +5,12 @@ import (
 	"errors"
 
 	"github.com/iliyankg/colab-shield/backend/core/requests"
-	"github.com/iliyankg/colab-shield/backend/models"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *requests.Claim) ([]*models.FileInfo, error) {
+func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *requests.Claim) ([]*domain.FileInfo, error) {
 	if len(request.Files) == 0 {
 		logger.Warn().Msg("No files to claim")
 		return nil, nil
@@ -18,15 +18,15 @@ func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId 
 
 	logger.Info().Msgf("Claiming... %d files", len(request.Files))
 
-	files := make([]*models.FileInfo, 0, len(request.Files))
-	rejectedFiles := make([]*models.FileInfo, 0)
+	files := make([]*domain.FileInfo, 0, len(request.Files))
+	rejectedFiles := make([]*domain.FileInfo, 0)
 
 	keys := make([]string, 0, len(request.Files))
 	keysFromFileRequests(projectId, request, &keys)
 
 	// Handler for missing files in the Redis hash
-	missingFileHandler := func(idx int) *models.FileInfo {
-		return models.NewFileInfo(request.Files[idx].FileId, request.Files[idx].FileHash, request.BranchName)
+	missingFileHandler := func(idx int) *domain.FileInfo {
+		return domain.NewFileInfo(request.Files[idx].FileId, request.Files[idx].FileHash, request.BranchName)
 	}
 
 	// Watch function to ensure keys do not get modified by another request while this transaction
@@ -65,12 +65,12 @@ func Claim(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId 
 	}
 }
 
-func claimFiles(userId string, fileInfos []*models.FileInfo, claimRequests []*requests.ClaimFileInfo, outRejectedFiles *[]*models.FileInfo) {
+func claimFiles(userId string, fileInfos []*domain.FileInfo, claimRequests []*requests.ClaimFileInfo, outRejectedFiles *[]*domain.FileInfo) {
 	for i := range fileInfos {
 		reqFile := claimRequests[i]
 
 		// try claiming the file
-		if err := fileInfos[i].Claim(userId, reqFile.FileHash, models.ClaimMode(reqFile.ClaimMode)); err != nil {
+		if err := fileInfos[i].Claim(userId, reqFile.FileHash, domain.ClaimMode(reqFile.ClaimMode)); err != nil {
 			// we do not return the error imediately so we can build a full list of rejected files
 			// and report them back all at once
 			*outRejectedFiles = append(*outRejectedFiles, fileInfos[i])

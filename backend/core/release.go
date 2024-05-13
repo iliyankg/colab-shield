@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/iliyankg/colab-shield/backend/models"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, branchId string, fileIds []string) ([]*models.FileInfo, error) {
+func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, branchId string, fileIds []string) ([]*domain.FileInfo, error) {
 	if len(fileIds) == 0 {
 		logger.Warn().Msg("No files to release")
 		return nil, nil
@@ -17,8 +17,8 @@ func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userI
 
 	logger.Info().Msgf("Releasing... %d files", len(fileIds))
 
-	files := make([]*models.FileInfo, 0, len(fileIds))
-	rejectedFiles := make([]*models.FileInfo, 0)
+	files := make([]*domain.FileInfo, 0, len(fileIds))
+	rejectedFiles := make([]*domain.FileInfo, 0)
 
 	keys := make([]string, 0, len(fileIds))
 	for _, fileId := range fileIds {
@@ -26,8 +26,8 @@ func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userI
 	}
 
 	// Handler for missing files in the Redis hash
-	missingFileHandler := func(idx int) *models.FileInfo {
-		rejectedFiles = append(rejectedFiles, models.NewMissingFileInfo(fileIds[idx]))
+	missingFileHandler := func(idx int) *domain.FileInfo {
+		rejectedFiles = append(rejectedFiles, domain.NewMissingFileInfo(fileIds[idx]))
 		return nil
 	}
 
@@ -66,7 +66,7 @@ func Release(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userI
 	}
 }
 
-func releaseFiles(userId string, fileInfos []*models.FileInfo, outRejectedFiles *[]*models.FileInfo) {
+func releaseFiles(userId string, fileInfos []*domain.FileInfo, outRejectedFiles *[]*domain.FileInfo) {
 	// update the files with the new file hashes
 	for i := range fileInfos {
 		if fileInfos[i] == nil {

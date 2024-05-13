@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/iliyankg/colab-shield/backend/core/requests"
-	"github.com/iliyankg/colab-shield/backend/models"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/iliyankg/colab-shield/protos"
 )
 
@@ -21,14 +21,14 @@ func projectIdFromCtx(ctx context.Context) string {
 }
 
 // FileInfosToProto converts a slice of FileInfo to a slice of protos.FileInfo
-func fileInfosToProto(fileInfos []*models.FileInfo, outTarget *[]*protos.FileInfo) {
+func fileInfosToProto(fileInfos []*domain.FileInfo, outTarget *[]*protos.FileInfo) {
 	for _, fi := range fileInfos {
 		*outTarget = append(*outTarget, toProto(fi))
 	}
 }
 
 // ToProto converts a FileInfo to a protos.FileInfo
-func toProto(fi *models.FileInfo) *protos.FileInfo {
+func toProto(fi *domain.FileInfo) *protos.FileInfo {
 	return &protos.FileInfo{
 		FileId:       fi.FileId,
 		FileHash:     fi.FileHash,

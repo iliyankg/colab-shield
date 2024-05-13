@@ -5,12 +5,12 @@ import (
 	"errors"
 
 	"github.com/iliyankg/colab-shield/backend/core/requests"
-	"github.com/iliyankg/colab-shield/backend/models"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-func Update(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *requests.Update) ([]*models.FileInfo, error) {
+func Update(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId string, projectId string, request *requests.Update) ([]*domain.FileInfo, error) {
 	if len(request.Files) == 0 {
 		logger.Warn().Msg("No files to update")
 		return nil, nil
@@ -18,15 +18,15 @@ func Update(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId
 
 	logger.Info().Msgf("Updating... %d files", len(request.Files))
 
-	files := make([]*models.FileInfo, 0, len(request.Files))
-	rejectedFiles := make([]*models.FileInfo, 0)
+	files := make([]*domain.FileInfo, 0, len(request.Files))
+	rejectedFiles := make([]*domain.FileInfo, 0)
 
 	keys := make([]string, 0, len(request.Files))
 	keysFromFileRequests(projectId, request, &keys)
 
 	// Handler for missing files in the Redis hash
-	missingFileHandler := func(idx int) *models.FileInfo {
-		rejectedFiles = append(rejectedFiles, models.NewMissingFileInfo(request.Files[idx].FileId))
+	missingFileHandler := func(idx int) *domain.FileInfo {
+		rejectedFiles = append(rejectedFiles, domain.NewMissingFileInfo(request.Files[idx].FileId))
 		return nil
 	}
 
@@ -65,7 +65,7 @@ func Update(ctx context.Context, logger zerolog.Logger, rc *redis.Client, userId
 	}
 }
 
-func updateFiles(userId string, branchName string, fileInfos []*models.FileInfo, pbFiles []*requests.UpdateFileInfo, outRejectedFiles *[]*models.FileInfo) {
+func updateFiles(userId string, branchName string, fileInfos []*domain.FileInfo, pbFiles []*requests.UpdateFileInfo, outRejectedFiles *[]*domain.FileInfo) {
 	// update the files with the new file hashes
 	for i := range fileInfos {
 		if err := fileInfos[i].Update(userId, pbFiles[i].OldHash, pbFiles[i].FileHash, branchName); err != nil {

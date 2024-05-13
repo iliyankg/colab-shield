@@ -3,8 +3,8 @@ package httpserver
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/iliyankg/colab-shield/backend/core/requests"
+	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/iliyankg/colab-shield/backend/httpserver/protocol"
-	"github.com/iliyankg/colab-shield/backend/models"
 	"github.com/rs/zerolog"
 )
 
@@ -14,7 +14,7 @@ func getLogger(ctx *gin.Context) zerolog.Logger {
 }
 
 // FileInfosToProto converts a slice of FileInfo to a slice of protos.FileInfo
-func fileInfosToProto(fileInfos []*models.FileInfo, outTarget *[]*protocol.FileInfo) {
+func fileInfosToProto(fileInfos []*domain.FileInfo, outTarget *[]*protocol.FileInfo) {
 	for _, fi := range fileInfos {
 		*outTarget = append(*outTarget, protocol.NewFileInfoFromModel(fi))
 	}
