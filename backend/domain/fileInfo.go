@@ -1,16 +1,16 @@
 package domain
 
 import (
-	"encoding/json"
 	"errors"
 )
 
 var (
-	ErrFileAlreadyClaimed = errors.New("file already claimed")
-	ErrFileOutOfDate      = errors.New("file out of date")
-	ErrUserNotOwner       = errors.New("user not owner")
-	ErrInvalidClaimMode   = errors.New("invalid claim mode")
-	ErrorFileNotMissing   = errors.New("file not missing")
+	ErrFileAlreadyClaimed      = errors.New("file already claimed")
+	ErrFileOutOfDate           = errors.New("file out of date")
+	ErrUserNotOwner            = errors.New("user not owner")
+	ErrInvalidClaimMode        = errors.New("invalid claim mode")
+	ErrorFileNotMissing        = errors.New("file not missing")
+	ErrFileInfoInvariantBroken = errors.New("file info invariant broken")
 )
 
 // Enum for claim mode
@@ -18,9 +18,9 @@ var (
 type ClaimMode int32
 
 const (
-	Unclaimed ClaimMode = iota
-	Shared
-	Exclusive
+	ClaimMode_Unclaimed ClaimMode = iota
+	ClaimMode_Shared
+	ClaimMode_Exclusive
 )
 
 // Enum for reject reason
@@ -28,12 +28,12 @@ const (
 type RejectReason int32
 
 const (
-	None RejectReason = iota
-	AlreadyClaimed
-	OutOfDate
-	NotOwner
-	InvalidClaimMode
-	Missing
+	RejectReason_None RejectReason = iota
+	RejectReason_AlreadyClaimed
+	RejectReason_OutOfDate
+	RejectReason_NotOwner
+	RejectReason_InvalidClaimMode
+	RejectReason_Missing
 )
 
 // FileInfo represents a file in the system
@@ -41,23 +41,23 @@ const (
 // TODO: Look into: https://pkg.go.dev/github.com/redis/rueidis/om#section-readme
 // TODO: Look into: https://stackoverflow.com/questions/11126793/json-and-dealing-with-unexported-fields
 type FileInfo struct {
-	FileId       string       `json:"fileId"`
-	FileHash     string       `json:"fileHash"`
-	UserIds      []string     `json:"userIds"`
-	BranchName   string       `json:"branchName"`
-	ClaimMode    ClaimMode    `json:"mode"`
-	RejectReason RejectReason `json:"-"` // RejectReason is not stored in db
+	fileId       string
+	fileHash     string
+	userIds      []string
+	branchName   string
+	claimMode    ClaimMode
+	rejectReason RejectReason
 }
 
 // NewFileInfo creates a new FileInfo that meets the invariants of the struct
 func NewFileInfo(fileId string, fileHash string, branchName string) *FileInfo {
 	return &FileInfo{
-		FileId:       fileId,
-		FileHash:     fileHash,
-		UserIds:      []string{},
-		BranchName:   branchName,
-		ClaimMode:    Unclaimed,
-		RejectReason: None,
+		fileId:       fileId,
+		fileHash:     fileHash,
+		userIds:      []string{},
+		branchName:   branchName,
+		claimMode:    ClaimMode_Unclaimed,
+		rejectReason: RejectReason_None,
 	}
 }
 
@@ -67,62 +67,109 @@ func NewFileInfo(fileId string, fileHash string, branchName string) *FileInfo {
 // unmarshalling from a database.
 func NewBlankFileInfo() *FileInfo {
 	return &FileInfo{
-		FileId:       "",
-		FileHash:     "",
-		UserIds:      []string{},
-		BranchName:   "",
-		ClaimMode:    Unclaimed,
-		RejectReason: None,
+		fileId:       "",
+		fileHash:     "",
+		userIds:      []string{},
+		branchName:   "",
+		claimMode:    ClaimMode_Unclaimed,
+		rejectReason: RejectReason_None,
 	}
 }
 
 // NewMissingFileInfo creates a new FileInfo for a file that is missing.
 func NewMissingFileInfo(fileId string) *FileInfo {
 	return &FileInfo{
-		FileId:       fileId,
-		FileHash:     "",
-		UserIds:      []string{},
-		BranchName:   "",
-		ClaimMode:    Unclaimed,
-		RejectReason: Missing,
+		fileId:       fileId,
+		fileHash:     "",
+		userIds:      []string{},
+		branchName:   "",
+		claimMode:    ClaimMode_Unclaimed,
+		rejectReason: RejectReason_Missing,
 	}
+}
+
+// NewFullFileInfo creates a new FileInfo with all the fields set.
+// Can error if the claim mode is not Unclaimed and there are no user IDs.
+func NewFullFileInfo(fileId string, fileHash string, userIds []string, branchName string, claimMode ClaimMode, rejectReason RejectReason) (*FileInfo, error) {
+	if claimMode != ClaimMode_Unclaimed && len(userIds) == 0 {
+		return nil, ErrFileInfoInvariantBroken
+	}
+
+	return &FileInfo{
+		fileId:       fileId,
+		fileHash:     fileHash,
+		userIds:      userIds,
+		branchName:   branchName,
+		claimMode:    claimMode,
+		rejectReason: rejectReason,
+	}, nil
+}
+
+// GetFileId returns the fileId of the FileInfo
+func (fi *FileInfo) GetFileId() string {
+	return fi.fileId
+}
+
+// GetFileHash returns the fileHash of the FileInfo
+func (fi *FileInfo) GetFileHash() string {
+	return fi.fileHash
+}
+
+// GetUserIds returns the userIds of the FileInfo
+func (fi *FileInfo) GetUserIds() []string {
+	return fi.userIds
+}
+
+// GetBranchName returns the branchName of the FileInfo
+func (fi *FileInfo) GetBranchName() string {
+	return fi.branchName
+}
+
+// GetClaimMode returns the claimMode of the FileInfo
+func (fi *FileInfo) GetClaimMode() ClaimMode {
+	return fi.claimMode
+}
+
+// GetRejectReason returns the rejectReason of the FileInfo
+func (fi *FileInfo) GetRejectReason() RejectReason {
+	return fi.rejectReason
 }
 
 // UpgradeMissingToNew upgrades a missing file to a new file setting up the object invariants.
 // Can error if the file is not missing.
 func (fi *FileInfo) UpgradeMissingToNew(fileHash string, branchName string) error {
-	if fi.RejectReason != Missing {
+	if fi.rejectReason != RejectReason_Missing {
 		return ErrorFileNotMissing
 	}
 
-	fi.FileHash = fileHash
-	fi.BranchName = branchName
-	fi.RejectReason = None
+	fi.fileHash = fileHash
+	fi.branchName = branchName
+	fi.rejectReason = RejectReason_None
 
 	return nil
 }
 
 // Claim claims a file for a user
 func (fi *FileInfo) Claim(userId string, fileHash string, claimMode ClaimMode) error {
-	if claimMode == Unclaimed {
+	if claimMode == ClaimMode_Unclaimed {
 		return fi.invalidClaimMode()
 	}
 
 	// Already claimed by someone else.
-	if fi.ClaimMode == Exclusive {
+	if fi.claimMode == ClaimMode_Exclusive {
 		return fi.alreadyClaimed()
 	}
 
-	if fi.FileHash != fileHash {
+	if fi.fileHash != fileHash {
 		return fi.fileOutOfDate()
 	}
 
-	if fi.ClaimMode == Shared && claimMode == Exclusive {
+	if fi.claimMode == ClaimMode_Shared && claimMode == ClaimMode_Exclusive {
 		return fi.invalidClaimMode()
 	}
 
 	fi.addOwner(userId)
-	fi.ClaimMode = claimMode
+	fi.claimMode = claimMode
 
 	return nil
 }
@@ -133,12 +180,12 @@ func (fi *FileInfo) Update(userId string, branchName string, oldHash string, fil
 		return fi.userNotOwner()
 	}
 
-	if fi.FileHash != oldHash {
+	if fi.fileHash != oldHash {
 		return fi.fileOutOfDate()
 	}
 
-	fi.FileHash = fileHash
-	fi.BranchName = branchName
+	fi.fileHash = fileHash
+	fi.branchName = branchName
 	return nil
 }
 
@@ -148,8 +195,8 @@ func (fi *FileInfo) Release(userId string) error {
 		return err
 	}
 
-	if len(fi.UserIds) == 0 {
-		fi.ClaimMode = Unclaimed
+	if len(fi.userIds) == 0 {
+		fi.claimMode = ClaimMode_Unclaimed
 	}
 
 	return nil
@@ -157,7 +204,7 @@ func (fi *FileInfo) Release(userId string) error {
 
 // CheckOwner checks if a user is an owner of a file
 func (fi *FileInfo) CheckOwner(userId string) bool {
-	for _, id := range fi.UserIds {
+	for _, id := range fi.userIds {
 		if id == userId {
 			return true
 		}
@@ -172,14 +219,14 @@ func (fi *FileInfo) addOwner(userId string) {
 		return
 	}
 
-	fi.UserIds = append(fi.UserIds, userId)
+	fi.userIds = append(fi.userIds, userId)
 }
 
 // removeOwner removes a userId from the FileInfo
 func (fi *FileInfo) removeOwner(userId string) error {
-	for i, id := range fi.UserIds {
+	for i, id := range fi.userIds {
 		if id == userId {
-			fi.UserIds = append(fi.UserIds[:i], fi.UserIds[i+1:]...)
+			fi.userIds = append(fi.userIds[:i], fi.userIds[i+1:]...)
 			return nil
 		}
 	}
@@ -188,28 +235,21 @@ func (fi *FileInfo) removeOwner(userId string) error {
 }
 
 func (fi *FileInfo) invalidClaimMode() error {
-	fi.RejectReason = InvalidClaimMode
+	fi.rejectReason = RejectReason_InvalidClaimMode
 	return ErrInvalidClaimMode
 }
 
 func (fi *FileInfo) alreadyClaimed() error {
-	fi.RejectReason = AlreadyClaimed
+	fi.rejectReason = RejectReason_AlreadyClaimed
 	return ErrFileAlreadyClaimed
 }
 
 func (fi *FileInfo) fileOutOfDate() error {
-	fi.RejectReason = OutOfDate
+	fi.rejectReason = RejectReason_OutOfDate
 	return ErrFileOutOfDate
 }
 
 func (fi *FileInfo) userNotOwner() error {
-	fi.RejectReason = NotOwner
+	fi.rejectReason = RejectReason_NotOwner
 	return ErrUserNotOwner
-}
-
-// Implements encoding.BinaryMarshaler interface for FileInfo
-// Needed for redis client to marshal FileInfo
-// Deliberately pass by value not by pointer!
-func (fi FileInfo) MarshalBinary() ([]byte, error) {
-	return json.Marshal(fi)
 }

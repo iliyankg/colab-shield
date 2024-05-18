@@ -1,32 +1,40 @@
-package core
+package redisdatabase
 
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
-type RedisDatabae struct {
+// RedisDatabase is a Colabdatabase implementation that uses Redis as the backend.
+type RedisDatabase struct {
 	rc *redis.Client
 }
 
+// NewRedisDatabase creates a new RedisDatabase instance with the
+// given client.
 func NewRedisDatabase(rc *redis.Client) domain.ColabDatabase {
-	return &RedisDatabae{
+	return &RedisDatabase{
 		rc: rc,
 	}
 }
 
-func (csd *RedisDatabae) Ping() error {
+func (csd *RedisDatabase) Ping() error {
 	if _, err := csd.rc.Ping(context.Background()).Result(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (csd *RedisDatabae) List(ctx context.Context, logger zerolog.Logger, projectId string, cursor uint64, pageSize int64, folderPath string) ([]*domain.FileInfo, uint64, error) {
+// List lists the files for the given project and folder path.
+// No path will list all files for the project.
+// cursor = 0 to start from the beginning
+// returned cursor
+func (csd *RedisDatabase) List(ctx context.Context, logger zerolog.Logger, projectId string, cursor uint64, pageSize int64, folderPath string) ([]*domain.FileInfo, uint64, error) {
 	if pageSize == 0 {
 		logger.Warn().Msg("No page size specified")
 		return nil, 0, nil
@@ -54,23 +62,25 @@ func (csd *RedisDatabae) List(ctx context.Context, logger zerolog.Logger, projec
 
 	files := make([]*domain.FileInfo, 0, len(keys))
 	if err := getFileInfos(ctx, logger, csd.rc, keys, missingFileHandler, &files); err != nil {
-		return nil, 0, err
+		return nil, 0, err // TODO: This has an internal error that needs exposing.
 	}
 
 	return files, cursor, nil
 }
 
-func (csd *RedisDatabae) Claim(ctx context.Context, logger zerolog.Logger, userId string, projectId string, request domain.ClaimRequest) ([]*domain.FileInfo, error) {
+// Claim claims the files with the given file IDs.
+func (csd *RedisDatabase) Claim(ctx context.Context, logger zerolog.Logger, userId string, projectId string, request domain.ClaimRequest) ([]*domain.FileInfo, error) {
 	requests := request.GetRequests()
+	numRequests := len(requests)
 
-	if len(requests) == 0 {
+	if numRequests == 0 {
 		logger.Warn().Msg("No files to claim")
 		return nil, nil
 	}
 
-	logger.Info().Msgf("Claiming... %d files", len(requests))
+	logger.Info().Msgf("Claiming... %d files", numRequests)
 
-	files := make([]*domain.FileInfo, 0, len(requests))
+	files := make([]*domain.FileInfo, 0, numRequests)
 	rejectedFiles := make([]*domain.FileInfo, 0)
 
 	filesRequest, ok := request.(domain.FilesRequest)
@@ -79,7 +89,7 @@ func (csd *RedisDatabae) Claim(ctx context.Context, logger zerolog.Logger, userI
 		return nil, ErrInvalidRequest
 	}
 
-	keys := make([]string, 0, len(requests))
+	keys := make([]string, 0, numRequests)
 	keysFromFileRequests(projectId, filesRequest, &keys)
 
 	// Handler for missing files in the Redis hash
@@ -91,7 +101,7 @@ func (csd *RedisDatabae) Claim(ctx context.Context, logger zerolog.Logger, userI
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := getFileInfos(ctx, logger, tx, keys, missingFileHandler, &files); err != nil {
-			return err
+			return err // TODO: This has an internal error that needs exposing.
 		}
 
 		claimFiles(userId, files, requests, &rejectedFiles)
@@ -100,7 +110,7 @@ func (csd *RedisDatabae) Claim(ctx context.Context, logger zerolog.Logger, userI
 			return ErrRejectedFiles
 		}
 
-		if request.GetSoftClaim() {
+		if request.GetIsSoftClaim() {
 			logger.Info().Msg("Only a soft claim, nothing saved...")
 			return nil
 		}
@@ -123,17 +133,19 @@ func (csd *RedisDatabae) Claim(ctx context.Context, logger zerolog.Logger, userI
 	}
 }
 
-func (csd *RedisDatabae) Update(ctx context.Context, logger zerolog.Logger, userId string, projectId string, request domain.UpdateRequest) ([]*domain.FileInfo, error) {
+// Update updates the files with the given file IDs.
+func (csd *RedisDatabase) Update(ctx context.Context, logger zerolog.Logger, userId string, projectId string, request domain.UpdateRequest) ([]*domain.FileInfo, error) {
 	requests := request.GetRequests()
+	numRequests := len(requests)
 
-	if len(requests) == 0 {
+	if numRequests == 0 {
 		logger.Warn().Msg("No files to update")
 		return nil, nil
 	}
 
-	logger.Info().Msgf("Updating... %d files", len(requests))
+	logger.Info().Msgf("Updating... %d files", numRequests)
 
-	files := make([]*domain.FileInfo, 0, len(requests))
+	files := make([]*domain.FileInfo, 0, numRequests)
 	rejectedFiles := make([]*domain.FileInfo, 0)
 
 	filesRequest, ok := request.(domain.FilesRequest)
@@ -142,7 +154,7 @@ func (csd *RedisDatabae) Update(ctx context.Context, logger zerolog.Logger, user
 		return nil, ErrInvalidRequest
 	}
 
-	keys := make([]string, 0, len(requests))
+	keys := make([]string, 0, numRequests)
 	keysFromFileRequests(projectId, filesRequest, &keys)
 
 	// Handler for missing files in the Redis hash
@@ -155,7 +167,7 @@ func (csd *RedisDatabae) Update(ctx context.Context, logger zerolog.Logger, user
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := getFileInfos(ctx, logger, csd.rc, keys, missingFileHandler, &files); err != nil {
-			return err
+			return err // TODO: This has an internal error that needs exposing.
 		}
 
 		if len(rejectedFiles) > 0 {
@@ -186,7 +198,8 @@ func (csd *RedisDatabae) Update(ctx context.Context, logger zerolog.Logger, user
 	}
 }
 
-func (csd *RedisDatabae) Release(ctx context.Context, logger zerolog.Logger, userId string, projectId string, branchId string, request domain.FilesRequest) ([]*domain.FileInfo, error) {
+// Release releases the files with the given file IDs.
+func (csd *RedisDatabase) Release(ctx context.Context, logger zerolog.Logger, userId string, projectId string, branchId string, request domain.FilesRequest) ([]*domain.FileInfo, error) {
 	requests := request.GetFileIDs()
 
 	if len(requests) == 0 {
@@ -200,9 +213,7 @@ func (csd *RedisDatabae) Release(ctx context.Context, logger zerolog.Logger, use
 	rejectedFiles := make([]*domain.FileInfo, 0)
 
 	keys := make([]string, 0, len(requests))
-	for _, fileId := range requests {
-		keys = append(keys, buildRedisKeyForFile(projectId, fileId))
-	}
+	keysFromFileRequests(projectId, request, &keys)
 
 	// Handler for missing files in the Redis hash
 	missingFileHandler := func(idx int) *domain.FileInfo {
@@ -214,7 +225,7 @@ func (csd *RedisDatabae) Release(ctx context.Context, logger zerolog.Logger, use
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := getFileInfos(ctx, logger, csd.rc, keys, missingFileHandler, &files); err != nil {
-			return err
+			return err // TODO: This has an internal error that needs exposing.
 		}
 
 		if len(rejectedFiles) > 0 {
@@ -245,6 +256,7 @@ func (csd *RedisDatabae) Release(ctx context.Context, logger zerolog.Logger, use
 	}
 }
 
+// claimFiles claims the files with the given file IDs
 func claimFiles(userId string, fileInfos []*domain.FileInfo, claimRequests []domain.FileClaim, outRejectedFiles *[]*domain.FileInfo) {
 	for i := range fileInfos {
 		if err := fileInfos[i].Claim(userId, claimRequests[i].GetFileHash(), claimRequests[i].GetClaimMode()); err != nil {
@@ -255,6 +267,7 @@ func claimFiles(userId string, fileInfos []*domain.FileInfo, claimRequests []dom
 	}
 }
 
+// updateFiles updates the files with the given file IDs
 func updateFiles(userId string, branchName string, fileInfos []*domain.FileInfo, updateRequests []domain.FileUpdate, outRejectedFiles *[]*domain.FileInfo) {
 	// update the files with the new file hashes
 	for i := range fileInfos {
@@ -266,6 +279,7 @@ func updateFiles(userId string, branchName string, fileInfos []*domain.FileInfo,
 	}
 }
 
+// releaseFiles releases the files with the given file IDs
 func releaseFiles(userId string, fileInfos []*domain.FileInfo, outRejectedFiles *[]*domain.FileInfo) {
 	// update the files with the new file hashes
 	for i := range fileInfos {
@@ -279,4 +293,10 @@ func releaseFiles(userId string, fileInfos []*domain.FileInfo, outRejectedFiles 
 			*outRejectedFiles = append(*outRejectedFiles, fileInfos[i])
 		}
 	}
+}
+
+// buildScanQuery builds the query string for the Redis SCAN command
+func buildScanQuery(projectId string, folderPath string) string {
+	// ProjectID is safe but folder path may not be.
+	return fmt.Sprintf("project:%s:file:%s*", projectId, folderPath)
 }

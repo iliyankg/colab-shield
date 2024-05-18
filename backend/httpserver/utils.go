@@ -2,9 +2,8 @@ package httpserver
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/iliyankg/colab-shield/backend/core/requests"
 	"github.com/iliyankg/colab-shield/backend/domain"
-	"github.com/iliyankg/colab-shield/backend/httpserver/protocol"
+	"github.com/iliyankg/colab-shield/backend/httpserver/internal/protocol"
 	"github.com/rs/zerolog"
 )
 
@@ -20,32 +19,20 @@ func fileInfosToProto(fileInfos []*domain.FileInfo, outTarget *[]*protocol.FileI
 	}
 }
 
-func newCoreClaimRequest(claimRequest *protocol.Claim) *requests.Claim {
-	files := make([]*requests.ClaimFileInfo, 0, len(claimRequest.Files))
-	for _, file := range claimRequest.Files {
-		files = append(files, &requests.ClaimFileInfo{
-			FileId:    file.FileId,
-			FileHash:  file.FileHash,
-			ClaimMode: requests.ClaimMode(file.ClaimMode),
-		})
+// newDomainClaimRequest converts a protocol.Claim to a domain.ClaimRequest
+func newDomainClaimRequest(cr *protocol.Claim) domain.ClaimRequest {
+	files := make([]domain.FileClaim, 0, len(cr.Files))
+	for _, file := range cr.Files {
+		files = append(files, domain.NewFileClaim(file.FileId, file.FileHash, domain.ClaimMode(file.ClaimMode)))
 	}
-	return &requests.Claim{
-		BranchName: claimRequest.BranchName,
-		SoftClaim:  claimRequest.SoftClaim,
-		Files:      files,
-	}
+	return domain.NewClaimRequest(cr.BranchName, cr.SoftClaim, files)
 }
 
-func newCoreUpdateRequest(claimRequest *protocol.Update) *requests.Update {
-	files := make([]*requests.UpdateFileInfo, 0, len(claimRequest.Files))
-	for _, file := range claimRequest.Files {
-		files = append(files, &requests.UpdateFileInfo{
-			FileId:   file.FileId,
-			FileHash: file.FileHash,
-		})
+// newDomainUpdateRequest converts a protocol.Update to a domain.UpdateRequest
+func newDomainUpdateRequest(cr *protocol.Update) domain.UpdateRequest {
+	files := make([]domain.FileUpdate, 0, len(cr.Files))
+	for _, file := range cr.Files {
+		files = append(files, domain.NewFileUpdate(file.FileId, file.FileHash, file.OldHash))
 	}
-	return &requests.Update{
-		BranchName: claimRequest.BranchName,
-		Files:      files,
-	}
+	return domain.NewUpdateRequest(cr.BranchName, files)
 }

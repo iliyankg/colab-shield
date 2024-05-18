@@ -3,7 +3,6 @@ package grpcserver
 import (
 	"context"
 
-	"github.com/iliyankg/colab-shield/backend/core/requests"
 	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/iliyankg/colab-shield/protos"
 )
@@ -30,41 +29,29 @@ func fileInfosToProto(fileInfos []*domain.FileInfo, outTarget *[]*protos.FileInf
 // ToProto converts a FileInfo to a protos.FileInfo
 func toProto(fi *domain.FileInfo) *protos.FileInfo {
 	return &protos.FileInfo{
-		FileId:       fi.FileId,
-		FileHash:     fi.FileHash,
-		UserIds:      fi.UserIds,
-		BranchName:   fi.BranchName,
-		ClaimMode:    protos.ClaimMode(fi.ClaimMode),
-		RejectReason: protos.RejectReason(fi.RejectReason),
+		FileId:       fi.GetFileId(),
+		FileHash:     fi.GetFileHash(),
+		UserIds:      fi.GetUserIds(),
+		BranchName:   fi.GetBranchName(),
+		ClaimMode:    protos.ClaimMode(fi.GetClaimMode()),
+		RejectReason: protos.RejectReason(fi.GetRejectReason()),
 	}
 }
 
-func newCoreClaimRequest(claimRequest *protos.ClaimFilesRequest) domain.ClaimRequest {
-	files := make([]*requests.ClaimFileInfo, 0, len(claimRequest.Files))
-	for i, file := range claimRequest.Files {
-		files[i] = &requests.ClaimFileInfo{
-			FileId:    file.FileId,
-			FileHash:  file.FileHash,
-			ClaimMode: requests.ClaimMode(file.ClaimMode),
-		}
+func newClaimRequest(claimRequest *protos.ClaimFilesRequest) domain.ClaimRequest {
+	files := make([]domain.FileClaim, 0, len(claimRequest.Files))
+	for _, file := range claimRequest.Files {
+		files = append(files, domain.NewFileClaim(file.FileId, file.FileHash, domain.ClaimMode(file.ClaimMode)))
 	}
-	return &requests.Claim{
-		BranchName: claimRequest.BranchName,
-		SoftClaim:  claimRequest.SoftClaim,
-		Files:      files,
-	}
+
+	return domain.NewClaimRequest(claimRequest.BranchName, claimRequest.SoftClaim, files)
 }
 
-func newCoreUpdateRequest(claimRequest *protos.UpdateFilesRequest) *domain.UpdateRequest {
-	files := make([]*requests.UpdateFileInfo, 0, len(claimRequest.Files))
-	for i, file := range claimRequest.Files {
-		files[i] = &requests.UpdateFileInfo{
-			FileId:   file.FileId,
-			FileHash: file.FileHash,
-		}
+func newUpdateRequest(req *protos.UpdateFilesRequest) domain.UpdateRequest {
+	files := make([]domain.FileUpdate, 0, len(req.Files))
+	for _, file := range req.Files {
+		files = append(files, domain.NewFileUpdate(file.FileId, file.FileHash, file.OldHash))
 	}
-	return &requests.Update{
-		BranchName: claimRequest.BranchName,
-		Files:      files,
-	}
+
+	return domain.NewUpdateRequest(req.BranchName, files)
 }

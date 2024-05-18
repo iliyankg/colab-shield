@@ -3,7 +3,7 @@ package grpcserver
 import (
 	"errors"
 
-	"github.com/iliyankg/colab-shield/backend/core"
+	"github.com/iliyankg/colab-shield/backend/redisdatabase"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -23,11 +23,11 @@ func parseCoreErrorToGrpc(err error) error {
 		return nil
 	}
 
-	if errors.Is(err, core.ErrUnmarshalFail) {
+	if errors.Is(err, redisdatabase.ErrUnmarshalFail) {
 		return ErrUnmarshalFail
 	}
 
-	if errors.Is(err, core.ErrRedisError) {
+	if errors.Is(err, redisdatabase.ErrRedisError) {
 		return ErrRedisError
 	}
 

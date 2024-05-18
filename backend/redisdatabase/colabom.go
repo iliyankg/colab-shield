@@ -1,4 +1,4 @@
-package core
+package redisdatabase
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/iliyankg/colab-shield/backend/domain"
+	"github.com/iliyankg/colab-shield/backend/redisdatabase/internal/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
@@ -35,7 +36,8 @@ func setFileInfos(ctx context.Context, logger zerolog.Logger, rc redis.Cmdable, 
 	// build the mset params
 	mSetParams := make([]any, 0, len(fileInfos)*3)
 	for i, file := range fileInfos {
-		mSetParams = append(mSetParams, keys[i], ".", *file)
+		toWrite := models.NewFileInfo(file)
+		mSetParams = append(mSetParams, keys[i], ".", *toWrite)
 	}
 
 	logger.Debug().Str("params", fmt.Sprintf("%v", mSetParams)).Msgf("Invoking JSONMSet")
@@ -64,13 +66,18 @@ func parseFileInfos(logger zerolog.Logger, keys []string, toParse []any, missing
 		}
 
 		// unmarshal the JSON from the Redis hash
-		fileInfo := domain.NewBlankFileInfo()
+		fileInfo := models.NewBlankFileInfo()
 		if err := json.Unmarshal([]byte(res.(string)), fileInfo); err != nil {
 			logger.Error().Str("key", keys[i]).Err(err).Msg("Failed to unmarshal JSON from Redis")
 			return ErrUnmarshalFail
 		}
 
-		*outFileInfos = append(*outFileInfos, fileInfo)
+		domainFile, err := fileInfo.ToDomain()
+		if err != nil {
+			return err
+		}
+
+		*outFileInfos = append(*outFileInfos, domainFile)
 	}
 
 	return nil

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/iliyankg/colab-shield/backend/core"
 	"github.com/iliyankg/colab-shield/backend/domain"
 	"github.com/iliyankg/colab-shield/protos"
 	"github.com/rs/zerolog"
@@ -98,9 +97,9 @@ func (s *ColabShieldServer) Claim(ctx context.Context, req *protos.ClaimFilesReq
 
 	userId := userIdFromCtx(ctx)
 	projectId := projectIdFromCtx(ctx)
-	coreReq := newCoreClaimRequest(req)
+	domainReq := newClaimRequest(req)
 
-	rejectedFiles, err := s.db.Claim(ctx, logger, userId, projectId, req)
+	rejectedFiles, err := s.db.Claim(ctx, logger, userId, projectId, domainReq)
 
 	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
@@ -129,9 +128,9 @@ func (s *ColabShieldServer) Update(ctx context.Context, req *protos.UpdateFilesR
 
 	userId := userIdFromCtx(ctx)
 	projectId := projectIdFromCtx(ctx)
-	coreReq := newCoreUpdateRequest(req)
+	domainReq := newUpdateRequest(req)
 
-	rejectedFiles, err := core.Update(ctx, logger, s.redisClient, userId, projectId, coreReq)
+	rejectedFiles, err := s.db.Update(ctx, logger, userId, projectId, domainReq)
 	parsedErr := parseCoreErrorToGrpc(err)
 	switch {
 	case errors.Is(parsedErr, ErrRejectedFiles):
@@ -159,7 +158,7 @@ func (s *ColabShieldServer) Release(ctx context.Context, request *protos.Release
 	userId := userIdFromCtx(ctx)
 	projectId := projectIdFromCtx(ctx)
 
-	rejectedFiles, err := core.Release(ctx, logger, s.redisClient, userId, projectId, request.BranchName, request.FileIds)
+	rejectedFiles, err := s.db.Release(ctx, logger, userId, projectId, request.BranchName, domain.NewFilesRequest(request.FileIds))
 
 	parsedErr := parseCoreErrorToGrpc(err)
 	switch {

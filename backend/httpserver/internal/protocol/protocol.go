@@ -40,12 +40,12 @@ type FileInfo struct {
 
 func NewFileInfoFromModel(fi *domain.FileInfo) *FileInfo {
 	return &FileInfo{
-		FileId:       fi.FileId,
-		FileHash:     fi.FileHash,
-		UserIds:      fi.UserIds,
-		BranchName:   fi.BranchName,
-		ClaimMode:    ClaimMode(fi.ClaimMode),
-		RejectReason: RejectReason(fi.RejectReason),
+		FileId:       fi.GetFileId(),
+		FileHash:     fi.GetFileHash(),
+		UserIds:      fi.GetUserIds(),
+		BranchName:   fi.GetBranchName(),
+		ClaimMode:    ClaimMode(fi.GetClaimMode()),
+		RejectReason: RejectReason(fi.GetRejectReason()),
 	}
 }
 

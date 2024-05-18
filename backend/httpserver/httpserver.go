@@ -12,22 +12,21 @@ import (
 	"github.com/alexliesenfeld/health"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
-	"github.com/iliyankg/colab-shield/backend/core"
-	"github.com/iliyankg/colab-shield/backend/httpserver/protocol"
+	"github.com/iliyankg/colab-shield/backend/domain"
+	"github.com/iliyankg/colab-shield/backend/httpserver/internal/protocol"
+	"github.com/iliyankg/colab-shield/backend/redisdatabase"
 	"github.com/rs/zerolog/log"
-
-	"github.com/redis/go-redis/v9"
 )
 
 const version = "0.1.0" // TODO: Get this from the build system
 
 // ColabShieldServer is the main HTTP server for Colab Shield
 type ColabShieldServer struct {
-	ginEngine   *gin.Engine
-	redisClient *redis.Client
+	ginEngine *gin.Engine
+	db        domain.ColabDatabase
 }
 
-func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
+func NewColabShieldServer(db domain.ColabDatabase) *ColabShieldServer {
 	ginEngine := gin.New()
 	ginEngine.Use(requestid.New())
 	ginEngine.Use(zerologGinHandler())
@@ -35,7 +34,7 @@ func NewColabShieldServer(redisClient *redis.Client) *ColabShieldServer {
 
 	return &ColabShieldServer{
 		ginEngine,
-		redisClient,
+		db,
 	}
 }
 
@@ -65,7 +64,7 @@ func (css *ColabShieldServer) createHealthHandler() gin.HandlerFunc {
 			Name:    "redis",
 			Timeout: 3 * time.Second,
 			Check: func(ctx context.Context) error {
-				return css.redisClient.Ping(ctx).Err()
+				return css.db.Ping()
 			},
 		}),
 	)
@@ -96,10 +95,10 @@ func (css *ColabShieldServer) claimHandler(ctx *gin.Context) {
 		return
 	}
 
-	coreReq := newCoreClaimRequest(&protoRequest)
-	rejectedFiles, err := core.Claim(ctx, logger, css.redisClient, userId, projectId, coreReq)
+	req := newDomainClaimRequest(&protoRequest)
+	rejectedFiles, err := css.db.Claim(ctx, logger, userId, projectId, req)
 	switch {
-	case errors.Is(err, core.ErrRejectedFiles):
+	case errors.Is(err, redisdatabase.ErrRejectedFiles):
 		protoRejectedFiles := make([]*protocol.FileInfo, 0, len(rejectedFiles))
 		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 		ctx.JSON(409, protoRejectedFiles) // 409 Conflict
@@ -132,10 +131,10 @@ func (css *ColabShieldServer) updateHandler(ctx *gin.Context) {
 		return
 	}
 
-	coreReq := newCoreUpdateRequest(&protoRequest)
-	rejectedFiles, err := core.Update(ctx, logger, css.redisClient, userId, projectId, coreReq)
+	req := newDomainUpdateRequest(&protoRequest)
+	rejectedFiles, err := css.db.Update(ctx, logger, userId, projectId, req)
 	switch {
-	case errors.Is(err, core.ErrRejectedFiles):
+	case errors.Is(err, redisdatabase.ErrRejectedFiles):
 		protoRejectedFiles := make([]*protocol.FileInfo, 0, len(rejectedFiles))
 		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 		ctx.JSON(409, protoRejectedFiles) // 409 Conflict
@@ -168,9 +167,9 @@ func (css *ColabShieldServer) releaseHandler(ctx *gin.Context) {
 		return
 	}
 
-	rejectedFiles, err := core.Release(ctx, logger, css.redisClient, userId, projectId, protoRequest.BranchName, protoRequest.FileIds)
+	rejectedFiles, err := css.db.Release(ctx, logger, userId, projectId, protoRequest.BranchName, domain.NewFilesRequest(protoRequest.FileIds))
 	switch {
-	case errors.Is(err, core.ErrRejectedFiles):
+	case errors.Is(err, redisdatabase.ErrRejectedFiles):
 		protoRejectedFiles := make([]*protocol.FileInfo, 0, len(rejectedFiles))
 		fileInfosToProto(rejectedFiles, &protoRejectedFiles)
 		ctx.JSON(409, protoRejectedFiles) // 409 Conflict
@@ -208,7 +207,7 @@ func (css *ColabShieldServer) listHandler(ctx *gin.Context) {
 		pathStr = string(path)
 	}
 
-	files, cursor, err := core.List(ctx, logger, css.redisClient, projectId, cursor, pageSize, pathStr)
+	files, cursor, err := css.db.List(ctx, logger, projectId, cursor, pageSize, pathStr)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"error": err.Error(),
