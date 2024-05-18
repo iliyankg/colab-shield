@@ -47,7 +47,7 @@ ENV REDIS_PASSWORD=$ARG_REDIS_PASSWORD
 ENV GIN_MODE=$ARG_GIN_MODE
 
 # Healthcheck 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl --fail http://localhost:$COLABSHIELD_HTTP_PORT/health || exit 1 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl --fail http://localhost:$COLABSHIELD_HTTP_PORT/health || exit 1 
 
 EXPOSE $ARG_GRPC_PORT
 EXPOSE $ARG_HTTP_PORT

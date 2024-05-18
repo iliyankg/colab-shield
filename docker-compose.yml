@@ -20,8 +20,8 @@ services:
   backend:
     build:
       # Context is . because we need the protos folder for now.
-      context: .
-      dockerfile: ./backend/Dockerfile-local-debug
+      context: ./backend
+      dockerfile: ./Dockerfile-local-debug
     environment:
       - COLABSHIELD_GRPC_PORT=1337
       - COLABSHIELD_HTTP_PORT=1338
