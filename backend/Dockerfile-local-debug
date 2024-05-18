@@ -21,7 +21,7 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 WORKDIR /workspaces/colab-shield
 
 # Copy the source code into the container
-COPY ./backend ./backend
+COPY . ./backend
 
 # Download the Go module dependencies
 RUN cd backend && go mod download
