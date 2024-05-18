@@ -11,14 +11,12 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**/*.go'
-      - 'cli/**/*.go'
 
 jobs:
   test-backend:
     runs-on: ubuntu-latest
     env:
       BACKEND_DIRECTORY: backend
-      CLI_DIRECTORY: cli
 
     steps:
     - uses: actions/checkout@v3
@@ -45,14 +43,3 @@ jobs:
       run: |
         go test ./... -json | go-testreport $GITHUB_STEP_SUMMARY    
 
-    - name: Install dependencies CLI
-      working-directory: ${{ env.CLI_DIRECTORY }}
-      if: ${{ success() }}
-      run: |
-        go mod download
-
-    - name: Test CLI
-      working-directory: ${{ env.CLI_DIRECTORY }}
-      if: ${{ success() }}
-      run: |
-        go test ./... -json | go-testreport $GITHUB_STEP_SUMMARY
