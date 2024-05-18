@@ -23,9 +23,6 @@ WORKDIR /workspaces/colab-shield
 # Copy the source code into the container
 COPY ./backend ./backend
 
-#TODO: Only for dev purposes and should be removed.
-COPY ./protos ./protos 
-
 # Download the Go module dependencies
 RUN cd backend && go mod download
 
