@@ -11,7 +11,7 @@ if docker-compose -f ../docker-compose.yml ps | grep -q "Up"; then
     yes Y | docker-compose -f ../docker-compose.yml rm backend
 
     # Rebuild the backend service
-    docker-compose -f ../docker-compose.yml build backend
+    docker-compose -f ../docker-compose.yml build backend || echo "Failed to build the backend service." && exit 1
 
     # Start the backend service
     docker-compose -f ../docker-compose.yml up backend
@@ -22,7 +22,7 @@ else
     echo "Docker Compose is not up."
 
     # Start the Docker Compose
-    docker-compose -f ../docker-compose.yml up --build -d
+    docker-compose -f ../docker-compose.yml up --build -d  || echo "Failed to build the backend service." && exit 1
 
     # Tail the logs of the backend service
     docker-compose -f ../docker-compose.yml logs -f backend
