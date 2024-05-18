@@ -9,6 +9,7 @@ ARG ARG_HTTP_PORT=1338
 ARG ARG_REDIS_HOST="redis"
 ARG ARG_REDIS_PORT=6379
 ARG ARG_REDIS_PASSWORD="redis"
+ARG ARG_GIN_MODE="release"
 
 # Set the working directory inside the container
 WORKDIR /backend
@@ -43,6 +44,7 @@ ENV COLABSHIELD_HTTP_PORT=$ARG_HTTP_PORT
 ENV REDIS_HOST=$ARG_REDIS_HOST
 ENV REDIS_PORT=$ARG_REDIS_PORT
 ENV REDIS_PASSWORD=$ARG_REDIS_PASSWORD
+ENV GIN_MODE=$ARG_GIN_MODE
 
 # Healthcheck 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl --fail http://localhost:$COLABSHIELD_HTTP_PORT/health || exit 1 
