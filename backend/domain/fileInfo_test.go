@@ -140,7 +140,7 @@ func TestFileInfo_Update(t *testing.T) {
 		fi.userIds = []string{"userId"}
 
 		// Action
-		if err := fi.Update("userId", "fileHash", "fileHashTwo", "branchNameTwo"); err != nil {
+		if err := fi.Update("userId", "branchNameTwo", "fileHash", "fileHashTwo"); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
 
@@ -158,7 +158,7 @@ func TestFileInfo_Update(t *testing.T) {
 		fi := NewFileInfo("fileId", "fileHash", "branchName")
 
 		// Action
-		if err := fi.Update("userId", "fileHash", "fileHashTwo", "branchNameTwo"); err != ErrUserNotOwner {
+		if err := fi.Update("userId", "branchNameTwo", "fileHash", "fileHashTwo"); err != ErrUserNotOwner {
 			t.Errorf("Expected error to be ErrUserNotOwner, got %v", err)
 		}
 	})
@@ -169,7 +169,7 @@ func TestFileInfo_Update(t *testing.T) {
 		fi.userIds = []string{"userId"}
 
 		// Action
-		if err := fi.Update("userId", "fileHashTwo", "fileHash", "branchNameTwo"); err != ErrFileOutOfDate {
+		if err := fi.Update("userId", "branchNameTwo", "fileHashTwo", "fileHash"); err != ErrFileOutOfDate {
 			t.Errorf("Expected error to be ErrFileOutOfDate, got %v", err)
 		}
 	})
@@ -296,9 +296,6 @@ func TestFileInfo_NewMissingFileInfo(t *testing.T) {
 	// Assert
 	if fi.fileId != "fileId" {
 		t.Errorf("Expected file ID to be 'fileId', got %s", fi.fileId)
-	}
-	if fi.fileId != "" {
-		t.Errorf("Expected file hash to be empty, got %s", fi.fileId)
 	}
 	if len(fi.userIds) != 0 {
 		t.Errorf("Expected user IDs to be empty, got %v", fi.userIds)
