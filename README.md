@@ -1,5 +1,5 @@
 # ColabShield
-> A client and backend to help people to collaborate on hard to merge files in Git.
+> A backend to help people to collaborate on hard to merge files in Git.
 
 ## Motivation
 **Experiment, explore and learn.**
