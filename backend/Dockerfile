@@ -3,14 +3,6 @@
 # ----------------------------------------------------------
 FROM golang:1.22-alpine AS builder
 
-# Define the default values for the build arguments
-ARG ARG_GRPC_PORT=1337
-ARG ARG_HTTP_PORT=1338
-ARG ARG_REDIS_HOST="redis"
-ARG ARG_REDIS_PORT=6379
-ARG ARG_REDIS_PASSWORD="redis"
-ARG ARG_GIN_MODE="release"
-
 # Set the working directory inside the container
 WORKDIR /backend
 
@@ -31,12 +23,20 @@ RUN go build .
 # ----------------------------------------------------------
 FROM golang:1.22-alpine
 
+# Define the default values for the build arguments
+ARG ARG_GRPC_PORT=1337
+ARG ARG_HTTP_PORT=1338
+ARG ARG_REDIS_HOST="redis"
+ARG ARG_REDIS_PORT=6379
+ARG ARG_REDIS_PASSWORD="redis"
+ARG ARG_GIN_MODE="release"
+
 RUN apk add --no-cache curl
 
 WORKDIR /app
 
 # Copy the built Go application from the builder stage
-COPY --from=builder /backend/backend /backend
+COPY --from=builder /backend/backend /app/backend
 
 # Set up environment variables
 ENV COLABSHIELD_GRPC_PORT=$ARG_GRPC_PORT

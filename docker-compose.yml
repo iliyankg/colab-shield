@@ -28,6 +28,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=redis
+      - GIN_MODE=debug
+      - DELVE_PORT=2345
     depends_on:
       - redis
     ports:
