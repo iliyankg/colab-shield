@@ -38,9 +38,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./Dockerfile
+          file: ./backend/Dockerfile
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          push: true
 
       - name: Generate attestation
         uses: actions/attest-build-provenance@v1
