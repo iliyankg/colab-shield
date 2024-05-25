@@ -30,12 +30,14 @@ jobs:
       - name: Extract metadata (tags, labels) from Dockerfile
         id: metadata
         uses: docker/metadata-action@v5
+        if: ${{ success() }}
         with:
           images: newlian/colab-shield
 
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v5
+        if: ${{ success() }}
         with:
           context: ./backend
           file: ./backend/Dockerfile
@@ -45,7 +47,8 @@ jobs:
 
       - name: Generate attestation
         uses: actions/attest-build-provenance@v1
+        if: ${{ success() }}
         with:
-          subject-name: newlian/colab-shield
+          subject-name: hub.docker.com/r/newlian/colab-shield
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
