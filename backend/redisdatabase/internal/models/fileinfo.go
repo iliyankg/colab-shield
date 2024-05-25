@@ -2,13 +2,8 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/iliyankg/colab-shield/backend/domain"
-)
-
-var (
-	ErrFileInfoCorrupted = errors.New("file info in database does not meet the invariants of the domain")
 )
 
 // FileInfo represents a file in the system
@@ -49,7 +44,7 @@ func NewBlankFileInfo() *FileInfo {
 func (fi *FileInfo) ToDomain() (*domain.FileInfo, error) {
 	toReturn, err := domain.NewFullFileInfo(fi.FileId, fi.FileHash, fi.UserIds, fi.BranchName, domain.ClaimMode(fi.ClaimMode), domain.RejectReason_None)
 	if err != nil { // Can only return one kind of error here so its a straight forward substitution
-		return nil, ErrFileInfoCorrupted
+		return nil, err
 	}
 	return toReturn, nil
 }

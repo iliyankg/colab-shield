@@ -62,7 +62,7 @@ func (csd *RedisDatabase) List(ctx context.Context, logger zerolog.Logger, proje
 
 	files := make([]*domain.FileInfo, 0, len(keys))
 	if err := getFileInfos(ctx, logger, csd.rc, keys, missingFileHandler, &files); err != nil {
-		return nil, 0, err // TODO: This has an internal error that needs exposing.
+		return nil, 0, err
 	}
 
 	return files, cursor, nil
@@ -101,7 +101,7 @@ func (csd *RedisDatabase) Claim(ctx context.Context, logger zerolog.Logger, user
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := getFileInfos(ctx, logger, tx, keys, missingFileHandler, &files); err != nil {
-			return err // TODO: This has an internal error that needs exposing.
+			return err
 		}
 
 		claimFiles(userId, files, requests, &rejectedFiles)
@@ -167,7 +167,7 @@ func (csd *RedisDatabase) Update(ctx context.Context, logger zerolog.Logger, use
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := getFileInfos(ctx, logger, csd.rc, keys, missingFileHandler, &files); err != nil {
-			return err // TODO: This has an internal error that needs exposing.
+			return err
 		}
 
 		if len(rejectedFiles) > 0 {
@@ -225,7 +225,7 @@ func (csd *RedisDatabase) Release(ctx context.Context, logger zerolog.Logger, us
 	// is in progress
 	watchFn := func(tx *redis.Tx) error {
 		if err := getFileInfos(ctx, logger, csd.rc, keys, missingFileHandler, &files); err != nil {
-			return err // TODO: This has an internal error that needs exposing.
+			return err
 		}
 
 		if len(rejectedFiles) > 0 {
