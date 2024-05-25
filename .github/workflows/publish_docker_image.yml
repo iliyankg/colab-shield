@@ -3,6 +3,8 @@ name: Publish Docker Image
 on:
   workflow_dispatch:
   push:
+    paths: 
+      - 'backend/**'
     branches:
       - 'main'
     tags:
@@ -44,11 +46,3 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
-
-      - name: Generate attestation
-        uses: actions/attest-build-provenance@v1
-        if: ${{ success() }}
-        with:
-          subject-name: index.docker.io/newlian/colab-shield
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
